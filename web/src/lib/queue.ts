@@ -7,8 +7,11 @@ export const enrichQueue = new Queue("enrich", { connection });
 
 const globalForWorker = globalThis as unknown as { enrichWorker?: Worker };
 
-export function ensureWorker() {
+export async function ensureWorker() {
   if (globalForWorker.enrichWorker) return;
+
+  await enrichQueue.obliterate({ force: true }).catch(() => {});
+  console.log("[enrich-worker] Queue cleaned, starting worker");
 
   globalForWorker.enrichWorker = new Worker("enrich", async (job) => {
     const { runEnrichment } = await import("./enrich-worker");

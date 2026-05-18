@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   });
   const validLogins = candidates.map(c => c.login);
 
-  ensureWorker();
+  await ensureWorker();
 
   const results: { login: string; jobId: string; status: string }[] = [];
 

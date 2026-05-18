@@ -18,7 +18,7 @@ export async function POST(
     return NextResponse.json({ jobId: existing, status: "already_running" });
   }
 
-  ensureWorker();
+  await ensureWorker();
 
   const job = await enrichQueue.add("enrich", { login }, {
     jobId: `enrich-${login}-${Date.now()}`,
