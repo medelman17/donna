@@ -47,6 +47,7 @@ function FilterPopover({
 const STATUS_OPTS: PopoverOption[] = [
   { value: "all", label: "All" },
   { value: "new", label: "New", swatch: "#8a8e9d" },
+  { value: "enriched", label: "Enriched", swatch: "#06b6d4" },
   { value: "reviewing", label: "Reviewing", swatch: "#3b82f6" },
   { value: "interested", label: "Interested", swatch: "#8b5cf6" },
   { value: "contacted", label: "Contacted", swatch: "#f59e0b" },

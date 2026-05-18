@@ -131,6 +131,17 @@ export async function runEnrichment(login: string) {
 
             pub(login, "tool-end", { tool: "analyze" });
           }
+
+          await prisma.crm.upsert({
+            where: { candidateLogin: login },
+            create: { candidateLogin: login, status: "enriched" },
+            update: {},
+          }).then(crm => {
+            if (crm.status === "new") {
+              return prisma.crm.update({ where: { id: crm.id }, data: { status: "enriched" } });
+            }
+          }).catch(() => {});
+
           pub(login, "done");
           break;
         }

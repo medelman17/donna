@@ -123,7 +123,7 @@ export function CrmPanel({
               <label style={{ fontSize: 10.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--color-fg-subtle)", width: 48, flexShrink: 0 }}>Status</label>
               <select value={status} onChange={e => handleStatus(e.target.value)}
                 style={{ fontSize: 12, padding: "4px 8px", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border)", background: "var(--color-bg-2)", color: "var(--color-fg)", flex: 1 }}>
-                {["new", "reviewing", "interested", "contacted", "passed", "hired"].map(s => (
+                {["new", "enriched", "reviewing", "interested", "contacted", "passed", "hired"].map(s => (
                   <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>
                 ))}
               </select>

@@ -264,6 +264,8 @@ body {
 .st-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
 .st-new       { background: #f1f2f6; color: #4a5060; }
 .st-new .dot  { background: #8a8e9d; }
+.st-enriched  { background: #e0f7fa; color: #0e7490; }
+.st-enriched .dot { background: #06b6d4; }
 .st-reviewing { background: #e6f1ff; color: #245aa6; }
 .st-reviewing .dot { background: #3b82f6; }
 .st-interested{ background: #ede5ff; color: #6a3fc2; }
