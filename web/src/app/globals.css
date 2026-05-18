@@ -917,6 +917,7 @@ body {
 
   /* Enrichment stream */
   .enrich-prose { font-size: 13px; }
+  .dx { padding-bottom: 60px !important; }
 
   /* Settings */
   .aside { padding: 12px; gap: 12px; }
