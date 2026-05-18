@@ -184,6 +184,7 @@ export default async function CandidatePage({ params }: Props) {
               email={candidate.email ?? null} name={candidate.name ?? null}
               bio={candidate.bio ?? null} blog={candidate.blog ?? null}
               company={candidate.company ?? null} twitter={candidate.twitter ?? null}
+              htmlUrl={candidate.htmlUrl ?? null} linkedInUrl={linkedIn?.profileUrl ?? null}
               followers={candidate.followers} publicRepos={candidate.publicRepos}
               githubCreatedAt={candidate.githubCreatedAt}
               hasOwnCommits={forkMeta?.hasOwnCommits ?? false}

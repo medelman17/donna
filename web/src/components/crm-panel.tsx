@@ -10,6 +10,7 @@ type Props = {
   confidence: number | null; model: string | null;
   email: string | null; name: string | null; bio: string | null;
   blog: string | null; company: string | null; twitter: string | null;
+  htmlUrl: string | null; linkedInUrl: string | null;
   followers: number; publicRepos: number; githubCreatedAt: Date | null;
   hasOwnCommits: boolean; aheadBy: number; behindBy: number; forkPushedAt: Date | null;
   openToWork: string | null; aiExperience: string | null;
@@ -26,7 +27,7 @@ type TabId = typeof TABS[number]["id"];
 export function CrmPanel({
   login, status: initStatus, bookmarked: initBookmarked, notes: initNotes, tags: initTags,
   fitScore, recommendedOutreach, confidence, model,
-  email, name, bio, blog, company, twitter,
+  email, name, bio, blog, company, twitter, htmlUrl, linkedInUrl,
   followers, publicRepos, githubCreatedAt,
   hasOwnCommits, aheadBy, behindBy,
   openToWork, aiExperience, legalTechRelevance, seniority,
@@ -139,6 +140,42 @@ export function CrmPanel({
               </div>
             )}
           </div>
+
+          {/* Links */}
+          {(() => {
+            const links = [
+              htmlUrl && { icon: "GH", label: login, href: htmlUrl },
+              email && { icon: "✉", label: email, href: `mailto:${email}` },
+              linkedInUrl && { icon: "in", label: "LinkedIn", href: linkedInUrl },
+              twitter && { icon: "𝕏", label: `@${twitter}`, href: `https://x.com/${twitter}` },
+              blog && { icon: "🔗", label: blog.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: blog.startsWith("http") ? blog : `https://${blog}` },
+            ].filter(Boolean) as { icon: string; label: string; href: string }[];
+            return links.length > 0 ? (
+              <div>
+                <h3>Links</h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  {links.map(l => (
+                    <a key={l.href} href={l.href} target={l.href.startsWith("mailto:") ? undefined : "_blank"} rel="noopener noreferrer"
+                      style={{
+                        display: "flex", alignItems: "center", gap: 8, fontSize: 12,
+                        color: "var(--color-fg-muted)", textDecoration: "none",
+                        padding: "3px 0", transition: "color 0.1s",
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.color = "var(--color-accent)")}
+                      onMouseLeave={e => (e.currentTarget.style.color = "var(--color-fg-muted)")}
+                    >
+                      <span style={{
+                        width: 20, height: 20, borderRadius: 4, background: "var(--color-bg-2)",
+                        border: "1px solid var(--color-border)", display: "grid", placeItems: "center",
+                        fontSize: 10, fontWeight: 700, flexShrink: 0, lineHeight: 1,
+                      }}>{l.icon}</span>
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.label}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : null;
+          })()}
 
           {/* Snapshot */}
           <div>
