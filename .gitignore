@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+dist/
+
+# Node / Next.js
+node_modules/
+.next/
+generated/
+
+# Data + cache
+data/
+pipeline/.cache/
+
+# Env / secrets
+mise.local.toml
+.env
+.env.local
+
+# OS
+.DS_Store
