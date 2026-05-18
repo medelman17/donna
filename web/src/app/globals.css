@@ -895,7 +895,7 @@ body {
   /* Detail page */
   .dx { padding: 14px 14px; }
   .detail-header { flex-direction: row; gap: 10px; align-items: flex-start; }
-  .detail-header img, .detail-header .avatar { width: 44px !important; height: 44px !important; }
+  .detail-header .av { --av-size: 44px !important; }
   .detail-header .h-name { flex-wrap: wrap; gap: 4px; }
   .detail-header .h-name h1 { font-size: 16px; }
   .detail-header .h-name .login { font-size: 11px; }
