@@ -1,12 +1,17 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Topbar } from "@/components/topbar";
+import { Avatar } from "@/components/avatar";
+import { StatusPill } from "@/components/atoms";
+import { AssessmentCard } from "@/components/assessment-card";
 import { SignalList } from "@/components/signal-list";
+import { LinkedInBlock } from "@/components/linkedin-block";
 import { RepoCard } from "@/components/repo-card";
+import { WebMention } from "@/components/web-mention";
+import { ActivityList } from "@/components/activity-list";
 import { CrmPanel } from "@/components/crm-panel";
+import { DetailNav } from "@/components/detail-nav";
+import { MapPin, Building2, ExternalLink, Globe, AtSign, Link2 } from "lucide-react";
 
 type Props = { params: Promise<{ login: string }> };
 
@@ -25,118 +30,123 @@ export default async function CandidatePage({ params }: Props) {
   });
 
   if (!candidate) notFound();
-  const { profile, signals, skills, repos, events, crm, linkedIn, webMentions } = candidate;
+  const { profile, forkMeta, signals, skills, repos, events, crm, linkedIn, webMentions } = candidate;
 
   return (
-    <div className="space-y-6">
-      <Link href="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Back
-      </Link>
-
-      <div className="flex items-start gap-4">
-        {candidate.avatarUrl && <img src={candidate.avatarUrl} alt={login} className="h-16 w-16 rounded-full" />}
-        <div>
-          <h1 className="text-2xl font-bold">{candidate.name || login}</h1>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            {candidate.location && <span>{candidate.location}</span>}
-            {candidate.company && <span>{candidate.company}</span>}
-            <a href={candidate.htmlUrl ?? `https://github.com/${login}`} target="_blank" rel="noopener noreferrer" className="hover:underline">GitHub</a>
-            {linkedIn?.profileUrl && <a href={linkedIn.profileUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">LinkedIn</a>}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          {profile && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  Assessment
-                  {profile.fitScore != null && <Badge>{profile.fitScore}/5</Badge>}
-                  {profile.seniority && <Badge variant="secondary">{profile.seniority}</Badge>}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {profile.summary && <p>{profile.summary}</p>}
-                {profile.fitReasoning && <p className="text-sm text-muted-foreground">{profile.fitReasoning}</p>}
-              </CardContent>
-            </Card>
-          )}
-
-          {signals.length > 0 && (
-            <Card>
-              <CardHeader><CardTitle>Signals</CardTitle></CardHeader>
-              <CardContent><SignalList signals={signals.map((s) => ({ kind: s.kind, text: s.text }))} /></CardContent>
-            </Card>
-          )}
-
-          {skills.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {skills.map((s) => <Badge key={s.id} variant="secondary">{s.name}</Badge>)}
-            </div>
-          )}
-
-          {linkedIn?.headline && (
-            <Card>
-              <CardHeader><CardTitle>LinkedIn</CardTitle></CardHeader>
-              <CardContent className="text-sm space-y-1">
-                <p className="font-medium">{linkedIn.headline}</p>
-                {linkedIn.currentTitle && <p>{linkedIn.currentTitle} at {linkedIn.currentCompany}</p>}
-              </CardContent>
-            </Card>
-          )}
-
-          {webMentions.length > 0 && (
-            <Card>
-              <CardHeader><CardTitle>Web Presence</CardTitle></CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                {webMentions.map((m) => (
-                  <div key={m.id}>
-                    <a href={m.url} target="_blank" rel="noopener noreferrer" className="font-medium hover:underline">
-                      [{m.source}] {m.title || m.url}
-                    </a>
-                    {m.snippet && <p className="text-muted-foreground">{m.snippet}</p>}
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {repos.length > 0 && (
-            <div>
-              <h3 className="mb-3 font-semibold">Top Repos</h3>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {repos.map((r) => (
-                  <RepoCard key={r.id} name={r.name} htmlUrl={r.htmlUrl} description={r.description}
-                    language={r.language} stars={r.stars} forks={r.forks} isFork={r.isFork} />
-                ))}
+    <div className="app-shell">
+      <Topbar candidateLogin={login} />
+      <DetailNav login={login}>
+        <div className="detail-grid view-enter">
+          <main className="detail-main">
+            <div className="dx">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <a href="/" className="tb-link" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>&larr; All candidates</a>
               </div>
-            </div>
-          )}
 
-          {events.length > 0 && (
-            <Card>
-              <CardHeader><CardTitle>Recent Activity</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-1 text-sm">
-                  {events.slice(0, 15).map((e) => (
-                    <div key={e.id} className="flex items-center gap-2">
-                      <span className="w-28 shrink-0 text-muted-foreground">{new Date(e.createdAt).toLocaleDateString()}</span>
-                      <Badge variant="outline" className="text-xs">{e.type}</Badge>
-                      {e.repoName && <span className="truncate">{e.repoName}</span>}
-                    </div>
-                  ))}
+              <header className="detail-header">
+                <Avatar name={candidate.name} login={login} avatarUrl={candidate.avatarUrl} size={62} />
+                <div className="h-meta">
+                  <div className="h-name">
+                    <h1>{candidate.name || login}</h1>
+                    <span className="login">@{login}</span>
+                    <StatusPill status={crm?.status ?? "new"} />
+                  </div>
+                  {candidate.bio && <p className="h-bio">{candidate.bio}</p>}
+                  <div className="h-row">
+                    {candidate.location && <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><MapPin size={14} /> {candidate.location}</span>}
+                    {candidate.company && <><span className="dotsep">·</span><span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Building2 size={14} /> {candidate.company}</span></>}
+                    <span className="dotsep">·</span>
+                    <a href={candidate.htmlUrl ?? `https://github.com/${login}`} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink size={14} /> github.com/{login}
+                    </a>
+                    {candidate.blog && <><span className="dotsep">·</span><a href={candidate.blog} target="_blank" rel="noopener noreferrer"><Globe size={14} /> {candidate.blog.replace("https://", "")}</a></>}
+                    {candidate.twitter && <><span className="dotsep">·</span><span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><AtSign size={14} /> {candidate.twitter}</span></>}
+                    {linkedIn?.profileUrl && <><span className="dotsep">·</span><a href={linkedIn.profileUrl} target="_blank" rel="noopener noreferrer"><Link2 size={14} /> LinkedIn</a></>}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+              </header>
 
-        <div>
-          <CrmPanel login={login} status={crm?.status ?? "new"} notes={crm?.notes ?? null} tags={crm?.tags ?? null} />
+              {profile && (
+                <AssessmentCard fitScore={profile.fitScore ?? 0} seniority={profile.seniority}
+                  confidence={profile.confidence} model={profile.model}
+                  generatedAt={profile.generatedAt} summary={profile.summary}
+                  fitReasoning={profile.fitReasoning}
+                  recommendedOutreach={profile.recommendedOutreach}
+                  outreachReason={profile.outreachReason} />
+              )}
+
+              <section className="section">
+                <div className="section-h">
+                  <h2>Signals</h2>
+                  <span className="count">
+                    {signals.filter(s => s.kind === "positive").length} positive ·{" "}
+                    {signals.filter(s => s.kind === "negative").length} negative ·{" "}
+                    {signals.filter(s => s.kind === "notable").length} notable
+                  </span>
+                </div>
+                <SignalList signals={signals.map(s => ({ kind: s.kind, text: s.text }))} />
+              </section>
+
+              {skills.length > 0 && (
+                <section className="section">
+                  <div className="section-h"><h2>Skills</h2><span className="count">{skills.length}</span></div>
+                  <div className="tags-cloud">{skills.map(s => <span key={s.id} className="tag">{s.name}</span>)}</div>
+                </section>
+              )}
+
+              {linkedIn?.headline && (
+                <section className="section">
+                  <div className="section-h">
+                    <h2>LinkedIn</h2>
+                    {linkedIn.connectionCount != null && <span className="count">{linkedIn.connectionCount} connections</span>}
+                  </div>
+                  <LinkedInBlock li={linkedIn} />
+                </section>
+              )}
+
+              {webMentions.length > 0 && (
+                <section className="section">
+                  <div className="section-h"><h2>Web Presence</h2><span className="count">{webMentions.length}</span></div>
+                  <div className="web-list">
+                    {webMentions.map(w => <WebMention key={w.id} url={w.url} title={w.title} snippet={w.snippet} source={w.source} />)}
+                  </div>
+                </section>
+              )}
+
+              {repos.length > 0 && (
+                <section className="section">
+                  <div className="section-h"><h2>Top Repos</h2><span className="count">{repos.length}</span></div>
+                  <div className="repo-list">
+                    {repos.map(r => <RepoCard key={r.id} name={r.name} htmlUrl={r.htmlUrl} description={r.description}
+                      language={r.language} stars={r.stars} forks={r.forks} isFork={r.isFork} pushedAt={r.pushedAt} />)}
+                  </div>
+                </section>
+              )}
+
+              {events.length > 0 && (
+                <section className="section">
+                  <div className="section-h"><h2>Recent Activity</h2><span className="count">{events.length} events</span></div>
+                  <ActivityList events={events} />
+                </section>
+              )}
+            </div>
+          </main>
+
+          <aside className="detail-aside">
+            <CrmPanel login={login}
+              status={crm?.status ?? "new"} notes={crm?.notes ?? null} tags={crm?.tags ?? null}
+              fitScore={profile?.fitScore ?? null}
+              recommendedOutreach={profile?.recommendedOutreach ?? null}
+              confidence={profile?.confidence ?? null}
+              model={profile?.model ?? null}
+              followers={candidate.followers} publicRepos={candidate.publicRepos}
+              githubCreatedAt={candidate.githubCreatedAt}
+              hasOwnCommits={forkMeta?.hasOwnCommits ?? false}
+              aheadBy={forkMeta?.aheadBy ?? 0} behindBy={forkMeta?.behindBy ?? 0}
+              forkPushedAt={forkMeta?.forkPushedAt ?? null} />
+          </aside>
         </div>
-      </div>
+      </DetailNav>
     </div>
   );
 }
