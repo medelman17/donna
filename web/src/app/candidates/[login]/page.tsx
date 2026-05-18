@@ -12,6 +12,7 @@ import { ActivityList } from "@/components/activity-list";
 import { CrmPanel } from "@/components/crm-panel";
 import { DetailWithEnrich } from "@/components/detail-with-enrich";
 import { DetailNav } from "@/components/detail-nav";
+import { EnrichmentHistory } from "@/components/enrichment-history";
 import { MapPin, Building2, ExternalLink, Globe, AtSign, Link2 } from "lucide-react";
 
 type Props = { params: Promise<{ login: string }> };
@@ -32,6 +33,30 @@ export default async function CandidatePage({ params }: Props) {
 
   if (!candidate) notFound();
   const { profile, forkMeta, signals, skills, repos, events, crm, linkedIn, webMentions } = candidate;
+
+  const enrichmentLogs = await prisma.enrichmentLog.findMany({
+    where: { candidateLogin: login },
+    orderBy: { createdAt: "desc" },
+    select: { tool: true, createdAt: true, output: true },
+  });
+
+  const enrichmentRuns = (() => {
+    const runs: { startedAt: string; tools: { tool: string; createdAt: string }[]; narrative: string | null }[] = [];
+    let current: typeof runs[0] | null = null;
+    const sorted = [...enrichmentLogs].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    for (const log of sorted) {
+      if (log.tool === "__narrative__") {
+        if (current) current.narrative = (log.output as any)?.text ?? null;
+        continue;
+      }
+      if (!current || log.createdAt.getTime() - new Date(current.tools[current.tools.length - 1]?.createdAt ?? 0).getTime() > 60_000) {
+        current = { startedAt: log.createdAt.toISOString(), tools: [], narrative: null };
+        runs.push(current);
+      }
+      current.tools.push({ tool: log.tool, createdAt: log.createdAt.toISOString() });
+    }
+    return runs.reverse();
+  })();
 
   return (
     <div className="app-shell">
@@ -125,6 +150,14 @@ export default async function CandidatePage({ params }: Props) {
                   <ActivityList events={events} />
                 </section>
               )}
+
+              <section className="section">
+                <div className="section-h">
+                  <h2>Enrichment Runs</h2>
+                  <span className="count">{enrichmentRuns.length} runs</span>
+                </div>
+                <EnrichmentHistory runs={enrichmentRuns} />
+              </section>
           </DetailWithEnrich>
 
           <aside className="detail-aside">

@@ -46,7 +46,7 @@ export async function POST(
     return encoder.encode(`data: ${JSON.stringify({ event, ...data as any })}\n\n`);
   }
 
-  function cardsFromToolResult(toolName: string, output: string): Array<{ card: string; props: Record<string, unknown> }> {
+  async function cardsFromToolResult(toolName: string, output: string): Promise<Array<{ card: string; props: Record<string, unknown> }>> {
     const cards: Array<{ card: string; props: Record<string, unknown> }> = [];
     try {
       const data = JSON.parse(output);
@@ -68,6 +68,24 @@ export async function POST(
         }
         if (data.twitter_username) metrics.push({ label: "Twitter", value: `@${data.twitter_username}` });
         if (metrics.length) cards.push({ card: "MetricGrid", props: { metrics } });
+
+        await prisma.candidate.update({
+          where: { login },
+          data: {
+            name: data.name || undefined,
+            bio: data.bio || undefined,
+            location: data.location || undefined,
+            company: data.company || undefined,
+            blog: data.blog || undefined,
+            twitter: data.twitter_username || undefined,
+            followers: data.followers ?? undefined,
+            publicRepos: data.public_repos ?? undefined,
+            avatarUrl: data.avatar_url || undefined,
+            htmlUrl: data.html_url || undefined,
+            hireable: data.hireable ?? undefined,
+            githubCreatedAt: data.created_at ? new Date(data.created_at) : undefined,
+          },
+        }).catch(() => {});
       }
 
       if (toolName === "gh_query" && Array.isArray(data)) {
@@ -79,6 +97,33 @@ export async function POST(
             description: r.description ?? null,
           }});
         }
+
+        const allRepos = data.filter((r: any) => r.name && r.full_name);
+        for (const r of allRepos) {
+          const exists = await prisma.repo.findFirst({
+            where: { candidateLogin: login, name: r.name },
+          });
+          if (exists) {
+            await prisma.repo.update({
+              where: { id: exists.id },
+              data: {
+                description: r.description, language: r.language,
+                stars: r.stargazers_count ?? 0, forks: r.forks_count ?? 0,
+                pushedAt: r.pushed_at ? new Date(r.pushed_at) : null,
+              },
+            }).catch(() => {});
+          } else {
+            await prisma.repo.create({
+              data: {
+                candidateLogin: login, name: r.name,
+                htmlUrl: r.html_url ?? "", description: r.description,
+                language: r.language, stars: r.stargazers_count ?? 0,
+                forks: r.forks_count ?? 0, isFork: r.fork ?? false,
+                pushedAt: r.pushed_at ? new Date(r.pushed_at) : null,
+              },
+            }).catch(() => {});
+          }
+        }
       }
     } catch {}
     return cards;
@@ -86,6 +131,7 @@ export async function POST(
 
   const stream = new ReadableStream({
     async start(controller) {
+      let narrativeText = "";
       try {
         let stepCount = 0;
         for await (const chunk of result.fullStream) {
@@ -93,12 +139,16 @@ export async function POST(
             case "start-step":
               if (stepCount > 0) {
                 controller.enqueue(sse("sep", {}));
+                narrativeText += "\n\n";
               }
               stepCount++;
               break;
             case "text-delta": {
               const text = (chunk as any).text ?? (chunk as any).textDelta ?? "";
-              if (text) controller.enqueue(sse("text", { text }));
+              if (text) {
+                controller.enqueue(sse("text", { text }));
+                narrativeText += text;
+              }
               break;
             }
             case "tool-call":
@@ -111,13 +161,24 @@ export async function POST(
               const toolName = (chunk as any).toolName ?? "";
               const output = typeof (chunk as any).output === "string" ? (chunk as any).output : JSON.stringify((chunk as any).output ?? "");
               controller.enqueue(sse("tool-end", { tool: toolName }));
-              const cards = cardsFromToolResult(toolName, output);
+              const cards = await cardsFromToolResult(toolName, output);
               for (const c of cards) {
                 controller.enqueue(sse("card", c));
               }
               break;
             }
             case "finish":
+              if (narrativeText.trim()) {
+                await prisma.enrichmentLog.create({
+                  data: {
+                    candidateLogin: login,
+                    tool: "__narrative__",
+                    input: {},
+                    output: { text: narrativeText.trim() },
+                    createdAt: new Date(),
+                  },
+                }).catch(() => {});
+              }
               controller.enqueue(sse("done", {}));
               break;
           }
