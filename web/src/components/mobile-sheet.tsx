@@ -6,14 +6,13 @@ export function MobileSheet({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <aside className={`detail-aside mobile-sheet ${open ? "sheet-open" : ""}`}>
+    <aside className={`detail-aside mobile-sheet ${open ? "sheet-open" : ""}`}
+      onClick={open ? undefined : () => setOpen(true)}>
       <div className="sheet-header">
-        <button className="sheet-handle" onClick={() => setOpen(!open)}>
-          <span className="sheet-pill" />
-        </button>
+        <span className="sheet-pill" />
         {open && (
-          <button className="sheet-close" onClick={() => setOpen(false)}>
-            ✕ Close
+          <button className="sheet-close" onClick={(e) => { e.stopPropagation(); setOpen(false); }}>
+            ✕
           </button>
         )}
       </div>
