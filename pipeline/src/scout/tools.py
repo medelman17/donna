@@ -10,6 +10,7 @@ from rich.console import Console
 from scout import db
 from scout.cache import cache_get, cache_set
 from scout.config import get_firecrawl_key, get_browserbase_keys, get_api_key
+from scout.events import publish
 
 console = Console()
 
@@ -32,6 +33,7 @@ def _notify_display(tool: str, detail: str, duration_ms: int = 0, ok: bool = Tru
             d.add_tool_call(tool, detail, duration_ms, ok)
     except Exception:
         pass
+    publish(_current_login, "tool_call", {"tool": tool, "detail": detail, "durationMs": duration_ms, "ok": ok})
 
 
 def _notify_persist(what: str) -> None:
@@ -42,6 +44,7 @@ def _notify_persist(what: str) -> None:
             d.add_persist(what)
     except Exception:
         pass
+    publish(_current_login, "persist", {"what": what})
 
 
 def _log(tool_name: str, input_data: dict, output: Any, duration_ms: int, error: str | None = None) -> None:
@@ -387,6 +390,8 @@ async def technical_assess(args: dict[str, Any]) -> dict[str, Any]:
         assessment = None
         sub_tools = 0
 
+        publish(_current_login, "subagent_start", {"name": "Technical Assessor", "description": "Reading source code from repos"})
+
         async for message in agent_query(
             prompt=(
                 f"Assess the technical ability of GitHub developer '{login}' by reading "
@@ -405,6 +410,7 @@ async def technical_assess(args: dict[str, Any]) -> dict[str, Any]:
                 for block in message.content:
                     if isinstance(block, TextBlock) and block.text.strip():
                         _notify_display("assessor", block.text.strip()[:80], 0, True)
+                        publish(_current_login, "subagent_reasoning", {"name": "Technical Assessor", "text": block.text.strip()})
                         # Also push to the enrichment display's reasoning
                         try:
                             from scout.enrich import get_display
@@ -420,6 +426,7 @@ async def technical_assess(args: dict[str, Any]) -> dict[str, Any]:
                 assessment = message.result
 
         duration = int((time.time() - start) * 1000)
+        publish(_current_login, "subagent_end", {"name": "Technical Assessor", "duration_ms": duration})
         _notify_display("technical_assess", f"done — {sub_tools} code reads, {duration/1000:.0f}s", duration, True)
         _log("technical_assess", args, {"length": len(assessment or ""), "sub_tools": sub_tools}, duration)
 
@@ -502,6 +509,8 @@ async def legal_relevance_assess(args: dict[str, Any]) -> dict[str, Any]:
         assessment = None
         sub_tools = 0
 
+        publish(_current_login, "subagent_start", {"name": "Legal Relevance Assessor", "description": "Investigating legal-tech connections"})
+
         async for message in agent_query(
             prompt=(
                 f"Investigate the legal-tech relevance of GitHub developer '{login}'. "
@@ -520,6 +529,7 @@ async def legal_relevance_assess(args: dict[str, Any]) -> dict[str, Any]:
                 for block in message.content:
                     if isinstance(block, TextBlock) and block.text.strip():
                         _notify_display("legal_assess", block.text.strip()[:80], 0, True)
+                        publish(_current_login, "subagent_reasoning", {"name": "Legal Relevance Assessor", "text": block.text.strip()})
                         try:
                             from scout.enrich import get_display
                             d = get_display()
@@ -534,6 +544,7 @@ async def legal_relevance_assess(args: dict[str, Any]) -> dict[str, Any]:
                 assessment = message.result
 
         duration = int((time.time() - start) * 1000)
+        publish(_current_login, "subagent_end", {"name": "Legal Relevance Assessor", "duration_ms": duration})
         _notify_display("legal_assess", f"done — {sub_tools} searches, {duration/1000:.0f}s", duration, True)
         _log("legal_relevance_assess", args, {"length": len(assessment or ""), "sub_tools": sub_tools}, duration)
 

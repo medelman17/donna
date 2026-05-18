@@ -15,6 +15,7 @@ from rich.table import Table
 from rich.text import Text
 
 from scout import db
+from scout.events import publish
 from scout.tools import enrichment_mcp_server, set_context
 
 console = Console()
@@ -242,6 +243,7 @@ def enrich_candidate(login: str) -> dict[str, Any]:
                             text = block.text.strip()
                             if text:
                                 display.set_reasoning(text)
+                                publish(login, "reasoning", {"step": display.steps, "text": text})
                                 live.update(display.render())
                         elif isinstance(block, ToolUseBlock):
                             display.tool_calls += 1
@@ -250,6 +252,8 @@ def enrich_candidate(login: str) -> dict[str, Any]:
                 elif isinstance(message, ResultMessage):
                     if message.subtype == "success":
                         final_text = message.result
+                        if final_text:
+                            publish(login, "summary", {"text": final_text})
                     elif message.subtype == "error":
                         display.status = f"Error: {message.result}"
                         live.update(display.render())
@@ -279,5 +283,9 @@ def enrich_candidate(login: str) -> dict[str, Any]:
         console.print(f"  Saved: {', '.join(display.data_persisted)}")
 
     console.print()
+
+    result = {"login": login, "tool_calls": display.tool_calls, "steps": display.steps, "duration_ms": duration}
+    publish(login, "done", {"tool_calls": result["tool_calls"], "steps": result["steps"], "duration_ms": duration})
+
     conn.close()
-    return {"login": login, "tool_calls": display.tool_calls, "duration_ms": duration}
+    return result
