@@ -386,7 +386,7 @@ In *Suits*, **Donna Paulsen** is Harvey Specter's executive assistant at Pearson
 
 **Mike Ross** is the brilliant fraud who never went to law school but practices law anyway. He's the open-source legal AI platform — [willchen96/mike](https://github.com/willchen96/mike) — doing legal work without the traditional credentials.
 
-This project is what happens when you point Donna at everyone who's ever touched Mike's world. She finds them, researches them, figures out who they really are, and tells Harvey which ones are worth a conversation.
+This project is what happens when you point Donna at everyone who's ever touched Mike's world. She finds them, researches them, figures out who they really are, and tells you which ones are worth a conversation.
 
 She doesn't miss anyone. She's Donna.
 
