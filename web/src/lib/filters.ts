@@ -1,25 +1,23 @@
-export function buildWhere(searchParams: Record<string, string | undefined>) {
+export function buildWhere(params: Record<string, string | undefined>) {
   const where: Record<string, unknown> = {};
-  const { status, seniority, fitMin, fitMax, hasOwnCommits, language, q } = searchParams;
+  const { status, seniority, minFit, hasCommits, language, q } = params;
 
-  if (status) where.crm = { status };
-  if (seniority) where.profile = { ...((where.profile as object) ?? {}), seniority };
-  if (fitMin || fitMax) {
+  if (status && status !== "all") where.crm = { status };
+  if (seniority && seniority !== "all") where.profile = { ...((where.profile as object) ?? {}), seniority };
+  if (minFit && parseInt(minFit) > 0) {
     where.profile = {
       ...((where.profile as object) ?? {}),
-      fitScore: {
-        ...(fitMin ? { gte: parseInt(fitMin) } : {}),
-        ...(fitMax ? { lte: parseInt(fitMax) } : {}),
-      },
+      fitScore: { gte: parseInt(minFit) },
     };
   }
-  if (hasOwnCommits === "true") where.forkMeta = { hasOwnCommits: true };
-  if (language) where.repos = { some: { language } };
+  if (hasCommits === "true") where.forkMeta = { hasOwnCommits: true };
+  if (language && language !== "all") where.repos = { some: { language } };
   if (q) {
     where.OR = [
       { name: { contains: q } },
       { bio: { contains: q } },
       { login: { contains: q } },
+      { location: { contains: q } },
     ];
   }
   return where;
@@ -27,13 +25,17 @@ export function buildWhere(searchParams: Record<string, string | undefined>) {
 
 export function buildOrderBy(sort?: string) {
   switch (sort) {
-    case "followers":
+    case "fit-asc":
+      return { profile: { fitScore: "asc" as const } };
+    case "followers-desc":
       return { followers: "desc" as const };
-    case "publicRepos":
+    case "repos-desc":
       return { publicRepos: "desc" as const };
-    case "fetchedAt":
+    case "fetched-desc":
       return { fetchedAt: "desc" as const };
-    case "fitScore":
+    case "name-asc":
+      return { name: "asc" as const };
+    case "fit-desc":
     default:
       return { profile: { fitScore: "desc" as const } };
   }
