@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Candidate {
+  login           String    @id
+  name            String?
+  bio             String?
+  location        String?
+  company         String?
+  blog            String?
+  twitter         String?
+  hireable        Boolean?
+  followers       Int       @default(0)
+  publicRepos     Int       @default(0)
+  avatarUrl       String?
+  htmlUrl         String?
+  githubCreatedAt DateTime?
+  fetchedAt       DateTime  @default(now())
+
+  forkMeta    ForkMeta?
+  repos       Repo[]
+  events      Event[]
+  profile     Profile?
+  signals     Signal[]
+  skills      Skill[]
+  crm         Crm?
+  linkedIn    LinkedInProfile?
+  webMentions WebMention[]
+}
+
+model ForkMeta {
+  id             Int       @id @default(autoincrement())
+  candidateLogin String    @unique
+  candidate      Candidate @relation(fields: [candidateLogin], references: [login], onDelete: Cascade)
+  forkHtmlUrl    String?
+  forkPushedAt   DateTime?
+  forkStars      Int       @default(0)
+  aheadBy        Int       @default(0)
+  behindBy       Int       @default(0)
+  hasOwnCommits  Boolean   @default(false)
+  defaultBranch  String?
+}
+
+model Repo {
+  id             Int       @id @default(autoincrement())
+  candidateLogin String
+  candidate      Candidate @relation(fields: [candidateLogin], references: [login], onDelete: Cascade)
+  name           String
+  htmlUrl        String
+  description    String?
+  language       String?
+  stars          Int       @default(0)
+  forks          Int       @default(0)
+  pushedAt       DateTime?
+  isFork         Boolean   @default(false)
+}
+
+model Event {
+  id             Int       @id @default(autoincrement())
+  candidateLogin String
+  candidate      Candidate @relation(fields: [candidateLogin], references: [login], onDelete: Cascade)
+  type           String
+  repoName       String?
+  createdAt      DateTime
+  payload        String?
+}
+
+model Profile {
+  id                  Int       @id @default(autoincrement())
+  candidateLogin      String    @unique
+  candidate           Candidate @relation(fields: [candidateLogin], references: [login], onDelete: Cascade)
+  summary             String?
+  seniority           String?
+  fitScore            Int?
+  fitReasoning        String?
+  recommendedOutreach String?
+  outreachReason      String?
+  confidence          Float?
+  model               String?
+  promptVersion       Int       @default(1)
+  generatedAt         DateTime  @default(now())
+  rawJson             String?
+}
+
+model Signal {
+  id             Int       @id @default(autoincrement())
+  candidateLogin String
+  candidate      Candidate @relation(fields: [candidateLogin], references: [login], onDelete: Cascade)
+  kind           String
+  text           String
+}
+
+model Skill {
+  id             Int       @id @default(autoincrement())
+  candidateLogin String
+  candidate      Candidate @relation(fields: [candidateLogin], references: [login], onDelete: Cascade)
+  name           String
+}
+
+model Crm {
+  id             Int       @id @default(autoincrement())
+  candidateLogin String    @unique
+  candidate      Candidate @relation(fields: [candidateLogin], references: [login], onDelete: Cascade)
+  status         String    @default("new")
+  notes          String?
+  tags           String?
+  updatedAt      DateTime  @updatedAt
+}
+
+model LinkedInProfile {
+  id              Int       @id @default(autoincrement())
+  candidateLogin  String    @unique
+  candidate       Candidate @relation(fields: [candidateLogin], references: [login], onDelete: Cascade)
+  profileUrl      String?
+  headline        String?
+  currentTitle    String?
+  currentCompany  String?
+  location        String?
+  connectionCount Int?
+  experience      String?
+  education       String?
+  skills          String?
+  certifications  String?
+  scrapedAt       DateTime  @default(now())
+}
+
+model WebMention {
+  id             Int       @id @default(autoincrement())
+  candidateLogin String
+  candidate      Candidate @relation(fields: [candidateLogin], references: [login], onDelete: Cascade)
+  url            String
+  title          String?
+  snippet        String?
+  source         String
+  content        String?
+  scrapedAt      DateTime  @default(now())
+}
