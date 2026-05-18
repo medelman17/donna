@@ -16,8 +16,6 @@ export default async function Home({ searchParams }: Props) {
   const [candidates, allCandidates] = await Promise.all([
     prisma.candidate.findMany({
       where: where as any,
-      orderBy: orderBy as any,
-      take: 200,
       include: {
         profile: { select: { summary: true, fitScore: true, seniority: true } },
         crm: { select: { status: true, bookmarked: true } },
