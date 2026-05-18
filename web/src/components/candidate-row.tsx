@@ -1,33 +1,51 @@
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { StatusPill } from "./status-pill";
+import { Avatar } from "./avatar";
+import { StatusPill, FitChip, LangBadge, fmtNum } from "./atoms";
 
 type Props = {
   login: string; name: string | null; avatarUrl: string | null;
   location: string | null; summary: string | null;
   fitScore: number | null; status: string; topLanguages: string[];
+  followers: number; publicRepos: number;
+  hasOwnCommits: boolean; aheadBy: number;
+  isActive: boolean;
+  onClick: () => void;
+  onMouseEnter: () => void;
 };
 
-export function CandidateRow({ login, name, avatarUrl, location, summary, fitScore, status, topLanguages }: Props) {
+export function CandidateRow({
+  login, name, avatarUrl, location, summary, fitScore, status,
+  topLanguages, followers, publicRepos, hasOwnCommits, aheadBy,
+  isActive, onClick, onMouseEnter,
+}: Props) {
   return (
-    <Link href={`/candidates/${login}`}
-          className="flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50">
-      {avatarUrl && <img src={avatarUrl} alt={login} className="h-10 w-10 rounded-full" />}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{name || login}</span>
-          {name && <span className="text-sm text-muted-foreground">@{login}</span>}
-          {location && <span className="text-xs text-muted-foreground">{location}</span>}
+    <div className="row" data-active={isActive || undefined}
+      onClick={onClick} onMouseEnter={onMouseEnter}>
+      <div className="who">
+        <Avatar name={name} login={login} avatarUrl={avatarUrl} size={22} />
+        <div className="who-stack">
+          <div className="name">
+            {name || login} <span className="login">@{login}</span>
+          </div>
         </div>
-        <p className="truncate text-sm text-muted-foreground">{summary || "No summary yet"}</p>
       </div>
-      <div className="flex items-center gap-2">
-        {topLanguages.slice(0, 3).map((l) => <Badge key={l} variant="secondary" className="text-xs">{l}</Badge>)}
+      <div className="fit-cell">
+        {fitScore != null ? <FitChip score={fitScore} /> : <span className="dim">—</span>}
       </div>
-      <div className="flex items-center gap-3">
-        {fitScore != null && <Badge variant={fitScore >= 4 ? "default" : "outline"}>{fitScore}/5</Badge>}
-        <StatusPill status={status} />
+      <div className="summary" title={summary ?? undefined}>{summary || <span className="dim">—</span>}</div>
+      <div className="loc">{location || <span className="dim">—</span>}</div>
+      <div className="langs">
+        {topLanguages.slice(0, 3).map(l => <LangBadge key={l} name={l} />)}
       </div>
-    </Link>
+      <div className="nums">{fmtNum(followers)}</div>
+      <div className="nums">{publicRepos}</div>
+      <div className="stat">
+        {hasOwnCommits ? (
+          <span className="commit-flag"><span className="glyph">●</span> +{aheadBy}</span>
+        ) : (
+          <span className="dim" style={{ fontSize: 11.5 }}>clone</span>
+        )}
+      </div>
+      <div className="stat"><StatusPill status={status} /></div>
+    </div>
   );
 }
