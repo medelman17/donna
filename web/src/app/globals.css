@@ -220,6 +220,7 @@ body {
 }
 .row:hover { background: var(--color-row-hover); }
 .row[data-active="true"] { background: var(--color-row-sel); }
+.row[data-selected="true"] { background: var(--color-accent-bg); }
 .row > div { padding-right: 8px; min-width: 0; overflow: hidden; }
 .row .who { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .row .who .name { font-weight: 500; color: var(--color-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -630,6 +631,32 @@ body {
   background: var(--color-bg-2); display: grid; place-items: center;
 }
 .dim { color: var(--color-fg-subtle); }
+
+/* Bulk action bar */
+.bulk-bar {
+  position: sticky; bottom: 0; z-index: 10;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 20px;
+  background: var(--color-panel);
+  border-top: 1px solid var(--color-border);
+  box-shadow: 0 -4px 12px rgba(15, 17, 28, 0.06);
+  font-size: 13px;
+}
+.bulk-btn {
+  appearance: none; border: 1px solid var(--color-accent);
+  background: var(--color-accent); color: #fff;
+  border-radius: var(--radius-DEFAULT); padding: 5px 14px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.bulk-btn:hover { filter: brightness(1.08); }
+.bulk-btn:disabled { opacity: 0.6; cursor: default; }
+.bulk-btn-clear {
+  appearance: none; border: 1px solid var(--color-border);
+  background: transparent; color: var(--color-fg-muted);
+  border-radius: var(--radius-DEFAULT); padding: 5px 10px;
+  font-size: 12px; cursor: pointer;
+}
+.bulk-btn-clear:hover { border-color: var(--color-fg-subtle); }
 .view-enter { animation: viewIn 140ms ease-out; }
 @keyframes viewIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
 

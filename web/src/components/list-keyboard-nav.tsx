@@ -9,10 +9,14 @@ export function ListKeyboardNav({
   candidates,
   children,
   sort,
+  selected,
+  onToggleAll,
 }: {
   candidates: CandidateRef[];
   children: (activeIdx: number, setActiveIdx: (i: number) => void) => React.ReactNode;
   sort: string;
+  selected?: Set<string>;
+  onToggleAll?: () => void;
 }) {
   const [activeIdx, setActiveIdx] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -53,11 +57,18 @@ export function ListKeyboardNav({
     else if (er.bottom > pr.bottom - 8) scrollRef.current.scrollTop += (er.bottom - pr.bottom + 8);
   }, [activeIdx]);
 
-  const cols = "minmax(180px, 1.4fr) 44px minmax(180px, 2.4fr) minmax(100px, 0.8fr) 56px 120px 60px 52px 56px 80px";
+  const allSelected = selected && selected.size === candidates.length && candidates.length > 0;
+  const someSelected = selected && selected.size > 0 && !allSelected;
+
+  const cols = "28px minmax(180px, 1.4fr) 44px minmax(180px, 2.4fr) minmax(100px, 0.8fr) 56px 120px 60px 52px 56px 80px";
 
   return (
     <div style={{ "--cols": cols, display: "contents" } as React.CSSProperties}>
       <div className="row-head">
+        <div style={{ display: "grid", placeItems: "center" }}>
+          <input type="checkbox" checked={allSelected ?? false} ref={el => { if (el) el.indeterminate = !!someSelected; }}
+            onChange={onToggleAll} style={{ cursor: "pointer", accentColor: "var(--color-accent)" }} />
+        </div>
         <div>Candidate</div>
         <div>Fit</div>
         <div>Summary</div>

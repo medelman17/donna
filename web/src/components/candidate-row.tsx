@@ -8,7 +8,8 @@ type Props = {
   bookmarked: boolean; topLanguages: string[];
   followers: number; publicRepos: number;
   hasOwnCommits: boolean; aheadBy: number;
-  isActive: boolean;
+  isActive: boolean; isSelected: boolean;
+  onSelect: (e: React.MouseEvent) => void;
   onClick: () => void;
   onMouseEnter: () => void;
 };
@@ -16,11 +17,16 @@ type Props = {
 export function CandidateRow({
   login, name, avatarUrl, location, summary, fitScore, status, seniority,
   bookmarked, topLanguages, followers, publicRepos, hasOwnCommits, aheadBy,
-  isActive, onClick, onMouseEnter,
+  isActive, isSelected, onSelect, onClick, onMouseEnter,
 }: Props) {
   return (
-    <div className="row" data-active={isActive || undefined}
+    <div className="row" data-active={isActive || undefined} data-selected={isSelected || undefined}
       onClick={onClick} onMouseEnter={onMouseEnter}>
+      <div style={{ display: "grid", placeItems: "center" }}
+        onClick={e => { e.stopPropagation(); onSelect(e); }}>
+        <input type="checkbox" checked={isSelected} readOnly
+          style={{ cursor: "pointer", accentColor: "var(--color-accent)" }} />
+      </div>
       <div className="who">
         <Avatar name={name} login={login} avatarUrl={avatarUrl} size={22} />
         <div className="who-stack">
