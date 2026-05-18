@@ -40,7 +40,43 @@ export async function POST(
     },
   });
 
-  return result.toTextStreamResponse();
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        let stepCount = 0;
+        for await (const chunk of result.fullStream) {
+          switch (chunk.type) {
+            case "start-step":
+              if (stepCount > 0) {
+                controller.enqueue(encoder.encode("\n\n"));
+              }
+              stepCount++;
+              break;
+            case "text-delta": {
+              const text = (chunk as any).text ?? (chunk as any).textDelta ?? "";
+              if (text) controller.enqueue(encoder.encode(text));
+              break;
+            }
+          }
+        }
+      } catch (e: any) {
+        if (e.name !== "AbortError") {
+          controller.enqueue(encoder.encode("\n\n[Error: enrichment interrupted]"));
+        }
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-cache",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
 }
 
 export async function GET(

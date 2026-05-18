@@ -58,8 +58,9 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
       } else {
         blocksRef.current = [...blocksRef.current, block];
       }
-      setBlocks([...blocksRef.current]);
     };
+
+    const flushBlocks = () => setBlocks([...blocksRef.current]);
 
     const run = async () => {
       try {
@@ -76,6 +77,12 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
 
         const decoder = new TextDecoder();
         let buffer = "";
+        let rafId = 0;
+
+        const scheduleFlush = () => {
+          cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(flushBlocks);
+        };
 
         while (true) {
           const { done, value } = await reader.read();
@@ -88,17 +95,27 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
           const lines = buffer.split("\n");
           buffer = lines.pop() || "";
 
+          let hasCard = false;
           for (const line of lines) {
             const card = line.trim() ? tryParseCard(line) : null;
             if (card) {
               pushBlock({ type: "card", card: card.card, props: card.props });
+              hasCard = true;
             } else {
               pushBlock({ type: "text", text: line + "\n" });
             }
           }
 
           setPartial(buffer);
+          if (hasCard) {
+            cancelAnimationFrame(rafId);
+            flushBlocks();
+          } else {
+            scheduleFlush();
+          }
         }
+
+        cancelAnimationFrame(rafId);
 
         if (buffer.trim()) {
           const card = tryParseCard(buffer);
@@ -108,6 +125,7 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
             pushBlock({ type: "text", text: buffer });
           }
         }
+        flushBlocks();
 
         setPartial("");
         setThinking(false);
@@ -218,9 +236,18 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
             if (block.type === "text") {
               const text = block.text.trim();
               if (!text) return null;
+              const isLast = i === blocks.length - 1;
+              const isStreaming = isLast && status === "streaming";
               return (
                 <div key={i} className="enrich-prose">
-                  <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
+                  {isStreaming ? (
+                    <>
+                      <span>{text}</span>
+                      {!partialVisible && <span className="enrich-cursor" />}
+                    </>
+                  ) : (
+                    <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
+                  )}
                 </div>
               );
             }
