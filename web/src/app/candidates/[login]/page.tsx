@@ -14,6 +14,7 @@ import { DetailWithEnrich } from "@/components/detail-with-enrich";
 import { DetailNav } from "@/components/detail-nav";
 import { EnrichmentHistory } from "@/components/enrichment-history";
 import { EnrichButton } from "@/components/enrich-button";
+import { MobileSheet } from "@/components/mobile-sheet";
 import { MapPin, Building2, ExternalLink, Globe, AtSign, Link2, Mail } from "lucide-react";
 
 type Props = { params: Promise<{ login: string }> };
@@ -174,7 +175,7 @@ export default async function CandidatePage({ params }: Props) {
               </section>
           </DetailWithEnrich>
 
-          <aside className="detail-aside">
+          <MobileSheet>
             <CrmPanel login={login}
               status={crm?.status ?? "new"} bookmarked={crm?.bookmarked ?? false} notes={crm?.notes ?? null} tags={crm?.tags ?? null}
               fitScore={profile?.fitScore ?? null}
@@ -194,7 +195,7 @@ export default async function CandidatePage({ params }: Props) {
               aiExperience={profile?.aiExperience ?? null}
               legalTechRelevance={profile?.legalTechRelevance ?? null}
               seniority={profile?.seniority ?? null} />
-          </aside>
+          </MobileSheet>
         </div>
       </DetailNav>
     </div>

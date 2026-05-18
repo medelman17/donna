@@ -808,10 +808,43 @@ body {
 /* Tablet: ≤1024px */
 @media (max-width: 1024px) {
   .detail-grid { grid-template-columns: 1fr; }
-  .detail-aside { border-left: none; border-top: 1px solid var(--color-border); }
   .dx { padding: 16px 18px; }
   .repo-list { grid-template-columns: 1fr; }
+
+  .mobile-sheet {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    border-left: none; border-top: none;
+    background: var(--color-panel);
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -8px 30px rgba(15, 17, 28, 0.12), 0 -2px 8px rgba(15, 17, 28, 0.06);
+    transform: translateY(calc(100% - 48px));
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 85vh;
+    overflow: hidden;
+  }
+  .mobile-sheet.sheet-open {
+    transform: translateY(0);
+    overflow-y: auto;
+  }
+  .mobile-sheet .sheet-handle {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    width: 100%; padding: 10px 0 6px;
+    appearance: none; border: none; background: transparent; cursor: pointer;
+  }
+  .mobile-sheet .sheet-pill {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: var(--color-border-strong);
+  }
+  .mobile-sheet .sheet-label {
+    font-size: 12px; font-weight: 600; color: var(--color-fg-muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .mobile-sheet .sheet-content { display: block; }
 }
+
+/* Bottom sheet — hidden on desktop */
+.sheet-handle { display: none; }
+.sheet-content { display: contents; }
 
 /* Mobile: ≤640px */
 @media (max-width: 640px) {
