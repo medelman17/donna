@@ -227,7 +227,8 @@ body {
 .row .who-stack { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
 .row .summary { color: var(--color-fg-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row .loc { color: var(--color-fg-subtle); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.row .langs { display: flex; gap: 4px; flex-wrap: nowrap; overflow: hidden; }
+.row .langs { display: flex; gap: 4px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.row .langs::-webkit-scrollbar { display: none; }
 .row .nums { color: var(--color-fg-muted); font-variant-numeric: tabular-nums; font-size: 12px; text-align: right; }
 .row .fit-cell { display: flex; justify-content: flex-start; align-items: center; }
 .row .stat { display: flex; justify-content: flex-start; }

@@ -33,6 +33,8 @@ export function CandidateRow({
       <div className="fit-cell">
         {fitScore != null ? <FitChip score={fitScore} /> : <span className="dim">—</span>}
       </div>
+      <div className="summary" title={summary ?? undefined}>{summary || <span className="dim">—</span>}</div>
+      <div className="loc">{location || <span className="dim">—</span>}</div>
       <div className="stat">
         {seniority && seniority !== "unknown" ? (
           <span style={{
@@ -43,10 +45,8 @@ export function CandidateRow({
           }}>{seniority}</span>
         ) : <span className="dim">—</span>}
       </div>
-      <div className="summary" title={summary ?? undefined}>{summary || <span className="dim">—</span>}</div>
-      <div className="loc">{location || <span className="dim">—</span>}</div>
       <div className="langs">
-        {topLanguages.slice(0, 2).map(l => <LangBadge key={l} name={l} />)}
+        {topLanguages.slice(0, 3).map(l => <LangBadge key={l} name={l} />)}
       </div>
       <div className="nums">{fmtNum(followers)}</div>
       <div className="nums">{publicRepos}</div>
