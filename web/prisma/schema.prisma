@@ -178,6 +178,23 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
+model JobPosition {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model HiringPreference {
+  id          Int      @id @default(autoincrement())
+  tag         String
+  description String
+  weight      Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model AgentMemory {
   id             Int        @id @default(autoincrement())
   key            String     @unique

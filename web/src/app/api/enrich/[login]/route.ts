@@ -248,16 +248,18 @@ export async function POST(
                 controller.enqueue(sse("tool-start", { tool: "analyze", args: "extracting fit, signals, skills, linkedin, web mentions..." }));
 
                 try {
-                  const settingsRows = await prisma.setting.findMany({
-                    where: { key: { in: ["company_description", "job_descriptions", "hiring_preferences"] } },
-                  });
-                  const settings: Record<string, string> = {};
-                  for (const r of settingsRows) settings[r.key] = r.value;
+                  const [settingsRows, jobPositions, hiringPrefs] = await Promise.all([
+                    prisma.setting.findMany({ where: { key: "company_description" } }),
+                    prisma.jobPosition.findMany({ orderBy: { createdAt: "asc" } }),
+                    prisma.hiringPreference.findMany({ orderBy: { weight: "desc" } }),
+                  ]);
 
+                  const companyDesc = settingsRows[0]?.value;
+                  const weightLabel = (w: number) => w >= 3 ? "HIGH" : w >= 2 ? "MEDIUM" : "LOW";
                   const companyBlock = [
-                    settings.company_description && `Company: ${settings.company_description}`,
-                    settings.job_descriptions && `Open Positions:\n${settings.job_descriptions}`,
-                    settings.hiring_preferences && `Hiring Preferences:\n${settings.hiring_preferences}`,
+                    companyDesc && `Company: ${companyDesc}`,
+                    jobPositions.length > 0 && `Open Positions:\n${jobPositions.map(p => `${p.title}: ${p.description}`).join("\n\n")}`,
+                    hiringPrefs.length > 0 && `Hiring Preferences:\n${hiringPrefs.map(p => `[${weightLabel(p.weight)}] ${p.tag}: ${p.description}`).join("\n")}`,
                   ].filter(Boolean).join("\n\n");
 
                   const { object: analysis } = await generateObject({
