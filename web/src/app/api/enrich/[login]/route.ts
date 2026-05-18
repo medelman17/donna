@@ -1,7 +1,10 @@
+import { streamText, stepCountIs } from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
 import { NextRequest, NextResponse } from "next/server";
-import { exec } from "child_process";
 import { prisma } from "@/lib/prisma";
-import path from "path";
+import { enrichmentTools, ENRICHMENT_SYSTEM_PROMPT } from "@/lib/tools";
+
+export const maxDuration = 300;
 
 export async function POST(
   request: NextRequest,
@@ -14,18 +17,30 @@ export async function POST(
     return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
   }
 
-  const pipelineDir = path.resolve(process.cwd(), "..", "pipeline");
+  const result = streamText({
+    model: anthropic("claude-opus-4-7"),
+    system: ENRICHMENT_SYSTEM_PROMPT,
+    prompt: `Research the GitHub developer '${login}' who forked willchen96/mike (an AI legal platform). Start by pulling their GitHub data, then use what you find to search the web for their professional presence. Think out loud.`,
+    tools: enrichmentTools,
+    stopWhen: stepCountIs(25),
+    abortSignal: request.signal,
+    onStepFinish: async ({ toolCalls, toolResults }) => {
+      for (const tc of toolCalls) {
+        const tr = toolResults.find((r: any) => r.toolCallId === tc.toolCallId);
+        await prisma.enrichmentLog.create({
+          data: {
+            candidateLogin: login,
+            tool: tc.toolName,
+            input: tc.input as any,
+            output: { result: typeof tr?.output === "string" ? tr.output.slice(0, 2000) : "ok" },
+            createdAt: new Date(),
+          },
+        }).catch(() => {});
+      }
+    },
+  });
 
-  exec(
-    `uv run scout deep-dive ${login}`,
-    { cwd: pipelineDir, env: { ...process.env } },
-    (error, stdout, stderr) => {
-      if (error) console.error(`Enrich error for ${login}:`, stderr);
-      else console.log(`Enrich done for ${login}`);
-    }
-  );
-
-  return NextResponse.json({ status: "started", login });
+  return result.toTextStreamResponse();
 }
 
 export async function GET(

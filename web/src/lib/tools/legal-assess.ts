@@ -1,4 +1,4 @@
-import { tool, generateText } from "ai";
+import { tool, generateText, stepCountIs } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { ghQueryTool } from "./gh-query";
@@ -12,7 +12,7 @@ Rate: Deep / Adjacent / Transferable / None. Provide specific evidence.`;
 
 export const legalAssessTool = tool({
   description: "Investigate a candidate's connection to the legal/legal-tech industry.",
-  parameters: z.object({
+  inputSchema: z.object({
     login: z.string().describe("GitHub username"),
     context: z.string().optional().describe("What you already know: name, company, bio"),
   }),
@@ -23,7 +23,7 @@ export const legalAssessTool = tool({
         system: LEGAL_PROMPT,
         prompt: `Assess legal-tech relevance for '${login}'. Context: ${context || "none"}`,
         tools: { gh_query: ghQueryTool, web_search: webSearchTool },
-        maxSteps: 8,
+        stopWhen: stepCountIs(8),
         abortSignal,
       });
       return text || "Could not assess legal relevance.";

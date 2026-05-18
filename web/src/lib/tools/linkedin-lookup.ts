@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const linkedinLookupTool = tool({
   description: "Search for a person's LinkedIn profile. Returns profile URL and any available info from search results.",
-  parameters: z.object({
+  inputSchema: z.object({
     name: z.string().describe("Person's full name"),
     company: z.string().optional().describe("Current or recent company"),
   }),

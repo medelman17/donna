@@ -1,4 +1,4 @@
-import { tool, generateText } from "ai";
+import { tool, generateText, stepCountIs } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { ghQueryTool } from "./gh-query";
@@ -13,7 +13,7 @@ ASSESS: Code organization, framework choices, testing practices, engineering mat
 
 export const technicalAssessTool = tool({
   description: "Dispatch a subagent to read actual source code from repos and evaluate engineering ability. Use for interesting ORIGINAL (non-fork) repos.",
-  parameters: z.object({
+  inputSchema: z.object({
     login: z.string().describe("GitHub username"),
     repos: z.array(z.string()).describe("Repo names to assess (max 3)"),
   }),
@@ -25,7 +25,7 @@ export const technicalAssessTool = tool({
         system: ASSESSOR_PROMPT,
         prompt: `Assess the technical ability of '${login}' by reading code from: ${repoList}`,
         tools: { gh_query: ghQueryTool },
-        maxSteps: 8,
+        stopWhen: stepCountIs(8),
         abortSignal,
       });
       return text || "Assessment could not be completed.";

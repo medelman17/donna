@@ -5,7 +5,7 @@ import { cacheGet, cacheSet } from "@/lib/redis";
 
 export const webScrapeTool = tool({
   description: "Extract content from a URL as clean markdown. Good for blogs, personal sites, articles. Do NOT use on linkedin.com — use linkedin_lookup instead.",
-  parameters: z.object({
+  inputSchema: z.object({
     url: z.string().describe("URL to scrape"),
   }),
   execute: async ({ url }, { toolCallId }) => {

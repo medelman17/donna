@@ -4,7 +4,7 @@ import { cacheGet, cacheSet } from "@/lib/redis";
 
 export const webSearchTool = tool({
   description: "Search Google for a person or topic. Returns titles, URLs, and snippets.",
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe("Search query"),
     limit: z.number().default(8).describe("Max results"),
   }),

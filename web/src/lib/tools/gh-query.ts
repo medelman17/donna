@@ -9,7 +9,7 @@ const execFileAsync = promisify(execFile);
 
 export const ghQueryTool = tool({
   description: "Query the GitHub REST API. Use for profiles, repos, events, READMEs, commits.",
-  parameters: z.object({
+  inputSchema: z.object({
     endpoint: z.string().describe("GitHub API path, e.g. /users/octocat"),
     jq_filter: z.string().optional().describe("Optional jq filter to apply"),
   }),
