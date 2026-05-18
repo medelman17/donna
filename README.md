@@ -392,4 +392,4 @@ She doesn't miss anyone. She's Donna.
 
 ## License
 
-Private. Internal use only.
+[AGPL-3.0](LICENSE)
