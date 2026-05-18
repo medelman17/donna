@@ -14,10 +14,10 @@ export async function Topbar({ candidateLogin }: Props) {
 
   return (
     <div className="topbar">
-      <div className="logo">
+      <Link href="/" className="logo">
         <div className="logo-mark">D</div>
         <span>Donna</span>
-      </div>
+      </Link>
       <span className="crumb">
         {candidateLogin && (
           <> / <Link href="/">Candidates</Link> / <span style={{ color: "var(--color-fg-muted)" }}>@{candidateLogin}</span></>

@@ -55,6 +55,8 @@ body {
   align-items: center;
   gap: 8px;
   font-weight: 600;
+  text-decoration: none;
+  color: inherit;
   letter-spacing: -0.005em;
 }
 .topbar .logo-mark {
