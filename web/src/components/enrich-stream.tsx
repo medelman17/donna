@@ -24,8 +24,19 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
   const [stepCount, setStepCount] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const evtSourceRef = useRef<EventSource | null>(null);
   const startRef = useRef(Date.now());
   const router = useRouter();
+
+  const abort = () => {
+    evtSourceRef.current?.close();
+    setStatus("done");
+    setEvents(prev => [...prev, { type: "error", message: "Aborted by user" }]);
+    setTimeout(() => {
+      router.refresh();
+      onDone();
+    }, 1000);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -41,10 +52,21 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
     trigger();
 
     const evtSource = new EventSource(`/api/enrich/${login}/stream`);
+    evtSourceRef.current = evtSource;
     setStatus("streaming");
 
+    let lastReasoningText = "";
     evtSource.onmessage = (e) => {
       const event: EnrichEvent = JSON.parse(e.data);
+
+      // Deduplicate near-identical reasoning steps (agent sometimes rephrases its plan)
+      if (event.type === "reasoning") {
+        const normalized = event.text.slice(0, 100).toLowerCase().replace(/\s+/g, " ");
+        const lastNorm = lastReasoningText.slice(0, 100).toLowerCase().replace(/\s+/g, " ");
+        if (normalized === lastNorm) return;
+        lastReasoningText = event.text;
+      }
+
       setEvents(prev => [...prev, event]);
 
       if (event.type === "tool_call") setToolCount(c => c + 1);
@@ -104,8 +126,19 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
           </>
         )}
         {status === "streaming" && (
-          <span style={{ marginLeft: "auto", color: "var(--color-accent)", fontWeight: 500 }}>
-            ● Live
+          <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ color: "var(--color-accent)", fontWeight: 500 }}>● Live</span>
+            <button
+              onClick={abort}
+              style={{
+                appearance: "none", border: "1px solid color-mix(in oklab, #dc2626, transparent 60%)",
+                background: "color-mix(in oklab, #dc2626, transparent 94%)", color: "#dc2626",
+                borderRadius: "var(--radius-DEFAULT)", padding: "2px 8px",
+                fontSize: 11, fontWeight: 500, cursor: "pointer",
+              }}
+            >
+              ■ Stop
+            </button>
           </span>
         )}
         {status === "done" && (
