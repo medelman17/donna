@@ -752,6 +752,13 @@ body {
 .enrich-prose input[type="checkbox"] {
   display: none;
 }
+.enrich-prose blockquote {
+  margin: 8px 0; padding: 6px 14px;
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted); font-size: 12.5px;
+}
+.enrich-prose blockquote p { margin: 0; }
+.enrich-prose blockquote p + p { margin-top: 4px; }
 .enrich-prose hr {
   border: none;
   border-top: 1px solid var(--color-border);
