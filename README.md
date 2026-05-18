@@ -11,6 +11,8 @@ Harvey needs associates. Mike is open source. Donna finds the people.
 
 She's not a recruiter. She's Donna.
 
+![Candidate list — sortable by fit score, followers, commits](assets/list-view.png)
+
 ---
 
 ## What She Does
@@ -44,6 +46,8 @@ On first launch, Donna walks you through onboarding:
 
 Skip any step and configure later via Settings.
 
+![Onboarding — company, positions, preferences](assets/onboarding.png)
+
 ---
 
 ## The Enrichment Pipeline
@@ -66,6 +70,8 @@ When Donna investigates a candidate, she dispatches an AI agent equipped with 12
 | `stackoverflow_lookup` | Pulls Stack Overflow reputation, top tags, and answer count. |
 
 The agent doesn't just run every tool blindly. It reads the triage card, plans a research strategy, and adapts. A SKIP candidate gets 1-2 sentences and moves on. An INVESTIGATE candidate gets the full treatment — the agent might spend 50+ steps chasing leads across the web.
+
+![Enrichment detail — real-time streaming + structured profile](assets/enrichment.png)
 
 ---
 
@@ -154,6 +160,9 @@ GitHub API (gh cli + GraphQL)
 - **Interactive Prisma transactions** — `$transaction(async (tx) => ...)` instead of batch `$transaction([...])` because the batch approach breaks TypeScript when mixing operations across models.
 - **Settings-driven scoring** — Job positions and weighted hiring preferences are injected into both the enrichment agent system prompt and the analysis scoring prompt.
 - **BYOK API key** — Anthropic API key can be entered via UI (stored in Settings DB with 30s cache) or set via environment variable. All consumers resolve the key at runtime.
+
+![Settings — API key, company, positions, weighted preferences](assets/settings.png)
+
 - **Stale Prisma client detection** — The `globalThis` singleton compares the `PrismaClient` constructor reference to detect when `prisma generate` has produced a new client, and recreates automatically.
 
 ---
@@ -192,6 +201,8 @@ Settings
 - **Sync** — ↻ button in toolbar re-fetches from GitHub and hydrates new candidates.
 - **Mobile** — Responsive layout with bottom sheet sidebar, touch-optimized list rows.
 - **Keyboard navigation** — Arrow keys to browse, Enter to open, Space to select, `/` to search, `e` to enrich.
+
+![Detail view — assessment cards, signals, sidebar](assets/detail-view.png)
 
 ### Filters
 
