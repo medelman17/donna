@@ -13,6 +13,8 @@ dependencies = [
     "stagehand>=3.19.5",
     "firecrawl-py",
     "pydantic>=2.0",
+    "psycopg[binary]>=3.2",
+    "redis>=5.0",
 ]
 
 [project.scripts]

@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-DB_PATH = PROJECT_ROOT / "data" / "scout.db"
 CACHE_DIR = PROJECT_ROOT / "pipeline" / ".cache"
 FORK_REPO = "willchen96/mike"
 MODEL = "claude-opus-4-7"
@@ -13,6 +12,14 @@ def get_api_key() -> str:
     if not key:
         raise RuntimeError("ANTHROPIC_API_KEY not set")
     return key
+
+
+def get_database_url() -> str:
+    return os.environ.get("DATABASE_URL", "postgresql://scout:scout_dev@localhost:54320/scout")
+
+
+def get_redis_url() -> str:
+    return os.environ.get("REDIS_URL", "redis://localhost:63790")
 
 
 def get_browserbase_keys() -> tuple[str, str]:
