@@ -882,10 +882,16 @@ body {
 
   /* Detail page */
   .dx { padding: 14px 14px; }
-  .detail-header { flex-direction: column; gap: 12px; }
-  .detail-header .h-name { flex-wrap: wrap; gap: 6px; }
-  .detail-header .h-name h1 { font-size: 18px; }
-  .detail-header .h-row { gap: 8px; font-size: 11px; }
+  .detail-header { flex-direction: row; gap: 10px; align-items: flex-start; }
+  .detail-header img, .detail-header .avatar { width: 44px !important; height: 44px !important; }
+  .detail-header .h-name { flex-wrap: wrap; gap: 4px; }
+  .detail-header .h-name h1 { font-size: 16px; }
+  .detail-header .h-name .login { font-size: 11px; }
+  .detail-header .h-bio { font-size: 12px; margin: 2px 0 6px; }
+  .detail-header .h-row { gap: 6px; font-size: 10.5px; flex-wrap: wrap; }
+  .detail-header .h-row .dotsep { display: none; }
+  .detail-header .h-row > * { display: inline-flex; align-items: center; gap: 3px; }
+  .enrich-fab { font-size: 10px; padding: 2px 8px; }
 
   .candidate-summary { flex-direction: column; gap: 8px; padding: 12px; }
 
