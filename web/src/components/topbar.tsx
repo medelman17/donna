@@ -15,8 +15,8 @@ export async function Topbar({ candidateLogin }: Props) {
   return (
     <div className="topbar">
       <div className="logo">
-        <div className="logo-mark">T</div>
-        <span>Talent Scout</span>
+        <div className="logo-mark">D</div>
+        <span>Donna</span>
       </div>
       <span className="crumb">
         / <Link href="/">Candidates</Link>

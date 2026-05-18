@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Talent Scout",
-  description: "GitHub fork profiler CRM for willchen96/mike",
+  title: "Donna",
+  description: "She knows everything about everyone.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
