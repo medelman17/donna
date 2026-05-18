@@ -870,7 +870,7 @@ body {
   .toolbar .filter-btn, .toolbar .toggle-pill { display: none; }
   .toolbar .right { margin-left: auto; }
 
-  .meta-strip { display: none; }
+  .metastrip { display: none !important; }
 
   .row-head { display: none; }
   .list-scroll { display: flex; flex-direction: column; gap: 1px; background: var(--color-border); }
@@ -896,8 +896,6 @@ body {
   }
   .row .summary .dim { display: none; }
   .row .loc, .row .langs, .row .nums, .row .stat { display: none !important; }
-
-  .meta-strip { display: none; }
 
   .bulk-bar { padding: 8px 12px; font-size: 12px; }
 
