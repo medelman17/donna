@@ -1,16 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EnrichStream } from "./enrich-stream";
 
 export function DetailWithEnrich({
   login,
+  initialEnriching,
   children,
 }: {
   login: string;
+  initialEnriching?: boolean;
   children: React.ReactNode;
 }) {
-  const [streaming, setStreaming] = useState(false);
+  const [streaming, setStreaming] = useState(initialEnriching ?? false);
+
+  useEffect(() => {
+    if (initialEnriching) return;
+    fetch(`/api/enrich/${login}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.enriching) setStreaming(true);
+      })
+      .catch(() => {});
+  }, [login, initialEnriching]);
 
   if (streaming) {
     return (
