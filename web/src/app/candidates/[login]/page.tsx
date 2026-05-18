@@ -130,7 +130,7 @@ export default async function CandidatePage({ params }: Props) {
               {linkedIn?.headline && (
                 <section className="section">
                   <div className="section-h">
-                    <h2>LinkedIn</h2>
+                    <h2>{linkedIn.profileUrl ? <a href={linkedIn.profileUrl} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>LinkedIn ↗</a> : "LinkedIn"}</h2>
                     {linkedIn.connectionCount != null && <span className="count">{linkedIn.connectionCount} connections</span>}
                   </div>
                   <LinkedInBlock li={linkedIn} />

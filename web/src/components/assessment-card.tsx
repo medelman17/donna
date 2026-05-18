@@ -9,14 +9,14 @@ type Props = {
   communityActivity: string | null; influenceLevel: string | null;
 };
 
-const CATEGORY_PILLS: { key: keyof Props; label: string; colorMap: Record<string, string> }[] = [
-  { key: "openToWork", label: "Open to Work", colorMap: { yes: "#16a34a", no: "#8a8a96", unknown: "#8a8a96" } },
-  { key: "isLawyer", label: "Lawyer", colorMap: { yes: "#7c3aed", no: "#8a8a96", unknown: "#8a8a96" } },
-  { key: "hasOwnCompany", label: "Founder", colorMap: { yes: "#ea580c", no: "#8a8a96", unknown: "#8a8a96" } },
-  { key: "aiExperience", label: "AI", colorMap: { advanced: "#2563eb", intermediate: "#3b82f6", basic: "#60a5fa", none: "#8a8a96", unknown: "#8a8a96" } },
-  { key: "legalTechRelevance", label: "Legal Tech", colorMap: { deep: "#7c3aed", adjacent: "#a78bfa", transferable: "#c4b5fd", none: "#8a8a96", unknown: "#8a8a96" } },
-  { key: "communityActivity", label: "Community", colorMap: { high: "#16a34a", moderate: "#4ade80", low: "#86efac", none: "#8a8a96", unknown: "#8a8a96" } },
-  { key: "influenceLevel", label: "Influence", colorMap: { notable: "#f59e0b", established: "#fbbf24", emerging: "#fcd34d", none: "#8a8a96", unknown: "#8a8a96" } },
+const CATEGORY_PILLS: { key: keyof Props; label: string; hide?: string[]; colorMap: Record<string, string> }[] = [
+  { key: "openToWork", label: "Open to Work", hide: ["no"], colorMap: { yes: "#15803d" } },
+  { key: "isLawyer", label: "Lawyer", hide: ["no"], colorMap: { yes: "#6d28d9" } },
+  { key: "hasOwnCompany", label: "Founder", hide: ["no"], colorMap: { yes: "#c2410c" } },
+  { key: "aiExperience", label: "AI", colorMap: { advanced: "#1d4ed8", intermediate: "#2563eb", basic: "#6b7280" } },
+  { key: "legalTechRelevance", label: "Legal Tech", colorMap: { deep: "#6d28d9", adjacent: "#7c3aed", transferable: "#6b7280" } },
+  { key: "communityActivity", label: "Community", colorMap: { high: "#15803d", moderate: "#16a34a", low: "#6b7280" } },
+  { key: "influenceLevel", label: "Influence", colorMap: { notable: "#b45309", established: "#d97706", emerging: "#6b7280" } },
 ];
 
 export function AssessmentCard({
@@ -30,7 +30,9 @@ export function AssessmentCard({
 
   const visiblePills = CATEGORY_PILLS.filter(p => {
     const val = props[p.key] as string | null;
-    return val && val !== "unknown" && val !== "none";
+    if (!val || val === "unknown" || val === "none") return false;
+    if (p.hide?.includes(val)) return false;
+    return true;
   });
 
   return (
@@ -59,14 +61,15 @@ export function AssessmentCard({
           <div style={{ display: "flex", flexWrap: "wrap", gap: 5, margin: "8px 0 4px" }}>
             {visiblePills.map(p => {
               const val = props[p.key] as string;
-              const color = p.colorMap[val] ?? "#8a8a96";
+              const color = p.colorMap[val] ?? "#6b7280";
+              const isSubtle = color === "#6b7280";
               const displayVal = p.key === "hasOwnCompany" && companyName ? companyName : val;
               return (
                 <span key={p.key} style={{
                   display: "inline-flex", alignItems: "center", gap: 4,
-                  padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 500,
-                  background: `color-mix(in oklab, ${color}, transparent 88%)`,
-                  color: color, border: `1px solid color-mix(in oklab, ${color}, transparent 70%)`,
+                  padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 600,
+                  background: isSubtle ? "#f3f4f6" : `color-mix(in oklab, ${color}, transparent 82%)`,
+                  color: color, border: `1px solid color-mix(in oklab, ${color}, transparent 55%)`,
                 }}>
                   <span style={{ width: 5, height: 5, borderRadius: "50%", background: color }} />
                   {p.label}: {displayVal}
