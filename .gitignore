@@ -21,3 +21,4 @@ mise.local.toml
 
 # OS
 .DS_Store
+.playwright-mcp/
