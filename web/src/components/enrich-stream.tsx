@@ -233,57 +233,77 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
           </div>
         )}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 680 }}>
-          {blocks.map((block, i) => {
-            if (block.type === "text") {
-              const text = block.text.trim();
-              if (!text) return null;
-              return (
-                <div key={i} className="enrich-prose">
-                  <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
-                </div>
-              );
-            }
-            if (block.type === "card") {
-              const Component = enrichComponents[block.card];
-              if (!Component) return null;
-              return <Component key={i} props={block.props as any} />;
-            }
-            if (block.type === "tool") {
-              const color = block.status === "done" ? "#16a34a" : "var(--color-accent)";
-              const icon = block.status === "done" ? "✓" : "●";
-              return (
-                <div
-                  key={i}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "3px 14px",
-                    fontSize: 11.5,
-                    fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
-                    color: "var(--color-fg-muted)",
-                  }}
-                >
-                  <span style={{ color, flexShrink: 0, fontWeight: 600 }}>{icon}</span>
-                  <span
+        <div className="enrich-feed" style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 680 }}>
+          {(() => {
+            const rendered: React.ReactNode[] = [];
+            let i = 0;
+            while (i < blocks.length) {
+              const block = blocks[i];
+              if (block.type === "text") {
+                const text = block.text.trim();
+                if (text) {
+                  rendered.push(
+                    <div key={i} className="enrich-prose">
+                      <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
+                    </div>
+                  );
+                }
+                i++;
+              } else if (block.type === "card") {
+                const Component = enrichComponents[block.card];
+                if (Component) {
+                  rendered.push(<Component key={i} props={block.props as any} />);
+                }
+                i++;
+              } else if (block.type === "tool") {
+                const toolGroup: typeof blocks = [];
+                while (i < blocks.length && blocks[i].type === "tool") {
+                  toolGroup.push(blocks[i]);
+                  i++;
+                }
+                rendered.push(
+                  <div
+                    key={`tools-${i}`}
                     style={{
-                      display: "inline-flex",
-                      padding: "1px 6px",
-                      borderRadius: 3,
-                      background: "var(--color-bg-2)",
-                      fontSize: 10.5,
-                      fontWeight: 500,
-                      whiteSpace: "nowrap",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      flexWrap: "wrap",
+                      padding: "2px 0",
+                      fontSize: 11,
+                      fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
+                      color: "var(--color-fg-muted)",
                     }}
                   >
-                    {block.tool}
-                  </span>
-                </div>
-              );
+                    {toolGroup.map((t, j) => {
+                      const tb = t as ContentBlock & { type: "tool" };
+                      const color = tb.status === "done" ? "#16a34a" : "var(--color-accent)";
+                      const icon = tb.status === "done" ? "✓" : "●";
+                      return (
+                        <span key={j} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          <span style={{ color, fontWeight: 600 }}>{icon}</span>
+                          <span
+                            style={{
+                              padding: "1px 5px",
+                              borderRadius: 3,
+                              background: "var(--color-bg-2)",
+                              fontSize: 10.5,
+                              fontWeight: 500,
+                            }}
+                          >
+                            {tb.tool}
+                          </span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                );
+              } else {
+                i++;
+              }
             }
-            return null;
-          })}
+            return rendered;
+          })()}
 
           {/* Thinking indicator */}
           {thinking && status === "streaming" && (
