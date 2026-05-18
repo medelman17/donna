@@ -14,6 +14,7 @@ const PIPELINE_STEPS = [
 ] as const;
 
 function SetupForm({ onComplete }: { onComplete: () => void }) {
+  const [apiKey, setApiKey] = useState("");
   const [company, setCompany] = useState("");
   const [positions, setPositions] = useState<DraftPosition[]>([{ title: "", description: "" }]);
   const [prefs, setPrefs] = useState<DraftPref[]>([{ tag: "", description: "", weight: 2 }]);
@@ -33,6 +34,13 @@ function SetupForm({ onComplete }: { onComplete: () => void }) {
     setSaving(true);
     try {
       const headers = { "Content-Type": "application/json" };
+
+      if (apiKey.trim()) {
+        await fetch("/api/settings", {
+          method: "PUT", headers,
+          body: JSON.stringify({ key: "anthropic_api_key", value: apiKey.trim() }),
+        });
+      }
 
       if (company.trim()) {
         await fetch("/api/settings", {
@@ -65,6 +73,18 @@ function SetupForm({ onComplete }: { onComplete: () => void }) {
 
   return (
     <div className="onboarding-setup">
+      <div className="setup-section">
+        <label className="setup-label">Anthropic API key</label>
+        <input
+          className="setup-input"
+          type="password"
+          placeholder="sk-ant-..."
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+        />
+        <span className="setup-hint">Required for enrichment. Leave blank if set via environment variable.</span>
+      </div>
+
       <div className="setup-section">
         <label className="setup-label">Tell Donna about your company</label>
         <textarea
@@ -201,7 +221,7 @@ export function SeedingState() {
           <div className="logo-mark" style={{ width: 64, height: 64, fontSize: 36, borderRadius: 16 }}>D</div>
         </div>
         <h1 className="onboarding-title">Donna</h1>
-        <p className="onboarding-tagline">Agentic legal tech talent discovery</p>
+        <p className="onboarding-tagline">Find your Mike</p>
 
         {phase === "setup" && (
           <SetupForm onComplete={startPipeline} />

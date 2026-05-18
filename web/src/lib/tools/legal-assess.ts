@@ -1,5 +1,5 @@
 import { tool, generateText, stepCountIs } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { getAnthropicProvider } from "../anthropic";
 import { z } from "zod";
 import { ghQueryTool } from "./gh-query";
 import { webSearchTool } from "./web-search";
@@ -17,6 +17,7 @@ export const legalAssessTool = tool({
     context: z.string().optional().describe("What you already know: name, company, bio"),
   }),
   execute: async ({ login, context }, { abortSignal }) => {
+    const anthropic = await getAnthropicProvider();
     try {
       const { text } = await generateText({
         model: anthropic("claude-opus-4-6"),

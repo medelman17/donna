@@ -1,5 +1,5 @@
 import { tool, generateText, stepCountIs } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { getAnthropicProvider } from "../anthropic";
 import { z } from "zod";
 import { ghQueryTool } from "./gh-query";
 
@@ -18,6 +18,7 @@ export const technicalAssessTool = tool({
     repos: z.array(z.string()).describe("Repo names to assess (max 3)"),
   }),
   execute: async ({ login, repos }, { abortSignal }) => {
+    const anthropic = await getAnthropicProvider();
     const repoList = repos.slice(0, 3).map(r => `${login}/${r}`).join(", ");
     try {
       const { text } = await generateText({

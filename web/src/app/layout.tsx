@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Donna — Agentic Legal Tech Talent Discovery",
+  title: "Donna — Find Your Mike",
   description: "She knows everything about everyone.",
 };
 

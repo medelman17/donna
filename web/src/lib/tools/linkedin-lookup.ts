@@ -54,7 +54,7 @@ export const linkedinLookupTool = tool({
         projectId: bbProject,
         model: {
           modelName: "anthropic/claude-sonnet-4-6",
-          apiKey: process.env.ANTHROPIC_API_KEY,
+          apiKey: await (await import("../anthropic")).getAnthropicApiKey(),
         },
         verbose: 0,
       });

@@ -1,5 +1,5 @@
 import { streamText, generateObject, stepCountIs } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { getAnthropicProvider } from "./anthropic";
 import { z } from "zod";
 import { prisma } from "./prisma";
 import { redis } from "./redis";
@@ -54,6 +54,7 @@ function pub(login: string, event: string, data: Record<string, unknown> = {}) {
 
 export async function runEnrichment(login: string) {
   const emittedCards = new Set<string>();
+  const anthropic = await getAnthropicProvider();
 
   const result = streamText({
     model: anthropic("claude-opus-4-6"),
@@ -241,6 +242,7 @@ async function cardsFromToolResult(login: string, toolName: string, output: stri
 }
 
 async function runAnalysis(login: string, narrative: string) {
+  const anthropic = await getAnthropicProvider();
   const [settingsRows, jobPositions, hiringPrefs] = await Promise.all([
     prisma.setting.findMany({ where: { key: "company_description" } }),
     prisma.jobPosition.findMany({ orderBy: { createdAt: "asc" } }),

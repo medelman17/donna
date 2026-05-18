@@ -28,10 +28,13 @@ function SaveIndicator({ state }: { state: null | "saving" | "saved" }) {
 }
 
 export default function SettingsPage() {
+  const [apiKey, setApiKey] = useState("");
   const [companyDesc, setCompanyDesc] = useState("");
   const [positions, setPositions] = useState<Position[]>([]);
   const [prefs, setPrefs] = useState<Preference[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const apiKeyDebRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [apiKeySave, setApiKeySave] = useState<null | "saving" | "saved">(null);
   const companyDebRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [companySave, setCompanySave] = useState<null | "saving" | "saved">(null);
 
@@ -41,12 +44,28 @@ export default function SettingsPage() {
       fetch("/api/settings/positions").then(r => r.json()),
       fetch("/api/settings/preferences").then(r => r.json()),
     ]).then(([settings, pos, prf]) => {
+      setApiKey(settings.anthropic_api_key ?? "");
       setCompanyDesc(settings.company_description ?? "");
       setPositions(pos);
       setPrefs(prf);
       setLoaded(true);
     });
   }, []);
+
+  const handleApiKey = (v: string) => {
+    setApiKey(v);
+    clearTimeout(apiKeyDebRef.current);
+    setApiKeySave("saving");
+    apiKeyDebRef.current = setTimeout(async () => {
+      await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "anthropic_api_key", value: v }),
+      });
+      setApiKeySave("saved");
+      setTimeout(() => setApiKeySave(null), 1200);
+    }, 600);
+  };
 
   const handleCompanyDesc = (v: string) => {
     setCompanyDesc(v);
@@ -132,6 +151,21 @@ export default function SettingsPage() {
         <p style={{ fontSize: 13, color: "var(--color-fg-muted)", lineHeight: 1.6, margin: 0 }}>
           Configure your company context. This information is available to both the enrichment research agent and the analysis agent — it informs how candidates are evaluated, what signals to prioritize, and how fit scores are calculated.
         </p>
+
+        {/* API Key */}
+        <section>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <h2 style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>Anthropic API Key</h2>
+            <SaveIndicator state={apiKeySave} />
+          </div>
+          <input
+            type="password"
+            value={apiKey}
+            onChange={e => handleApiKey(e.target.value)}
+            placeholder="sk-ant-... (leave blank to use environment variable)"
+            style={{ ...inputStyle, width: "100%" }}
+          />
+        </section>
 
         {/* Company Description */}
         <section>

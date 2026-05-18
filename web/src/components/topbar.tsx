@@ -19,7 +19,7 @@ export async function Topbar({ candidateLogin }: Props) {
         <span>Donna</span>
       </Link>
       {!candidateLogin && (
-        <span className="tagline">Discover well-suited legal tech engineering talent</span>
+        <span className="tagline">Find your Mike</span>
       )}
       <span className="crumb">
         {candidateLogin && (
