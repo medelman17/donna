@@ -10,7 +10,7 @@ import { RepoCard } from "@/components/repo-card";
 import { WebMention } from "@/components/web-mention";
 import { ActivityList } from "@/components/activity-list";
 import { CrmPanel } from "@/components/crm-panel";
-import { EnrichButton } from "@/components/enrich-button";
+import { DetailWithEnrich } from "@/components/detail-with-enrich";
 import { DetailNav } from "@/components/detail-nav";
 import { MapPin, Building2, ExternalLink, Globe, AtSign, Link2 } from "lucide-react";
 
@@ -38,12 +38,7 @@ export default async function CandidatePage({ params }: Props) {
       <Topbar candidateLogin={login} />
       <DetailNav login={login}>
         <div className="detail-grid view-enter">
-          <main className="detail-main">
-            <div className="dx">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <a href="/" className="tb-link" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>&larr; All candidates</a>
-              </div>
-
+          <DetailWithEnrich login={login}>
               <header className="detail-header">
                 <Avatar name={candidate.name} login={login} avatarUrl={candidate.avatarUrl} size={62} />
                 <div className="h-meta">
@@ -130,14 +125,9 @@ export default async function CandidatePage({ params }: Props) {
                   <ActivityList events={events} />
                 </section>
               )}
-            </div>
-          </main>
+          </DetailWithEnrich>
 
           <aside className="detail-aside">
-            <div style={{ padding: "12px 20px 0", borderBottom: "1px solid var(--color-border)", paddingBottom: 12 }}>
-              <h3 style={{ fontSize: 10.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--color-fg-subtle)", margin: "0 0 8px" }}>Agent</h3>
-              <EnrichButton login={login} />
-            </div>
             <CrmPanel login={login}
               status={crm?.status ?? "new"} notes={crm?.notes ?? null} tags={crm?.tags ?? null}
               fitScore={profile?.fitScore ?? null}
