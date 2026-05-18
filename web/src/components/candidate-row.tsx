@@ -7,7 +7,7 @@ type Props = {
   fitScore: number | null; status: string; seniority: string | null;
   bookmarked: boolean; topLanguages: string[];
   followers: number; publicRepos: number;
-  hasOwnCommits: boolean; aheadBy: number;
+  totalCommits: number;
   isActive: boolean; isSelected: boolean;
   onSelect: (e: React.MouseEvent) => void;
   onClick: () => void;
@@ -16,7 +16,7 @@ type Props = {
 
 export function CandidateRow({
   login, name, avatarUrl, location, summary, fitScore, status, seniority,
-  bookmarked, topLanguages, followers, publicRepos, hasOwnCommits, aheadBy,
+  bookmarked, topLanguages, followers, publicRepos, totalCommits,
   isActive, isSelected, onSelect, onClick, onMouseEnter,
 }: Props) {
   return (
@@ -56,13 +56,7 @@ export function CandidateRow({
       </div>
       <div className="nums">{fmtNum(followers)}</div>
       <div className="nums">{publicRepos}</div>
-      <div className="stat">
-        {hasOwnCommits ? (
-          <span className="commit-flag"><span className="glyph">●</span> +{aheadBy}</span>
-        ) : (
-          <span className="dim" style={{ fontSize: 11.5 }}>clone</span>
-        )}
-      </div>
+      <div className="nums">{totalCommits > 0 ? fmtNum(totalCommits) : <span className="dim">—</span>}</div>
       <div className="stat"><StatusPill status={status} /></div>
     </div>
   );

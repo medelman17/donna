@@ -11,7 +11,7 @@ type CandidateData = {
   fitScore: number | null; seniority: string | null;
   status: string; bookmarked: boolean; topLanguages: string[];
   followers: number; publicRepos: number;
-  hasOwnCommits: boolean; aheadBy: number;
+  totalCommits: number;
 };
 
 export function CandidateList({ candidates, sort }: { candidates: CandidateData[]; sort: string }) {

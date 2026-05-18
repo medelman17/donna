@@ -5,6 +5,7 @@ import { Topbar } from "@/components/topbar";
 import { FilterBar } from "@/components/filter-bar";
 import { MetaStrip } from "@/components/meta-strip";
 import { CandidateList } from "@/components/candidate-list";
+import { SeedingState } from "@/components/seeding-state";
 
 type Props = { searchParams: Promise<Record<string, string | undefined>> };
 
@@ -33,6 +34,18 @@ export default async function Home({ searchParams }: Props) {
   ]);
 
   const total = allCandidates.length;
+
+  if (total === 0) {
+    return (
+      <div className="app-shell">
+        <Topbar />
+        <div className="list-page view-enter">
+          <SeedingState />
+        </div>
+      </div>
+    );
+  }
+
   const avgFit = total > 0
     ? (allCandidates.reduce((s, c) => s + (c.profile?.fitScore ?? 0), 0) / total).toFixed(2)
     : "0";
@@ -56,8 +69,7 @@ export default async function Home({ searchParams }: Props) {
     topLanguages: [...new Set(c.repos.map(r => r.language).filter(Boolean))] as string[],
     followers: c.followers,
     publicRepos: c.publicRepos,
-    hasOwnCommits: c.forkMeta?.hasOwnCommits ?? false,
-    aheadBy: c.forkMeta?.aheadBy ?? 0,
+    totalCommits: c.totalCommits,
   }));
 
   const sort = params.sort ?? "fit-desc";
@@ -67,6 +79,7 @@ export default async function Home({ searchParams }: Props) {
       case "fit-asc": return (a.fitScore ?? 999) - (b.fitScore ?? 999);
       case "followers-desc": return b.followers - a.followers;
       case "repos-desc": return b.publicRepos - a.publicRepos;
+      case "commits-desc": return b.totalCommits - a.totalCommits;
       case "name-asc": return (a.name ?? a.login).localeCompare(b.name ?? b.login);
       default: return 0;
     }

@@ -18,6 +18,9 @@ export async function Topbar({ candidateLogin }: Props) {
         <div className="logo-mark">D</div>
         <span>Donna</span>
       </Link>
+      {!candidateLogin && (
+        <span className="tagline">Discover well-suited legal tech engineering talent</span>
+      )}
       <span className="crumb">
         {candidateLogin && (
           <> / <Link href="/">Candidates</Link> / <span style={{ color: "var(--color-fg-muted)" }}>@{candidateLogin}</span></>

@@ -27,7 +27,7 @@ export async function POST() {
       const { stdout } = await execFileAsync("gh", [
         "api", ep.path, "--paginate",
         "--header", "Accept: application/vnd.github+json",
-      ], { timeout: 60000 });
+      ], { timeout: 120000, maxBuffer: 20 * 1024 * 1024 });
 
       const items: any[] = [];
       for (const line of stdout.trim().split("\n")) {

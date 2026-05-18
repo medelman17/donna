@@ -75,9 +75,9 @@ export function ListKeyboardNav({
         <div>Location</div>
         <div>Level</div>
         <div>Languages</div>
-        <div style={{ textAlign: "right" }}>Flwrs</div>
-        <div style={{ textAlign: "right" }}>Repos</div>
-        <div>Fork</div>
+        <div style={{ textAlign: "center" }}>Flwrs</div>
+        <div style={{ textAlign: "center" }}>Repos</div>
+        <div style={{ textAlign: "center" }}>Commits</div>
         <div>Status</div>
       </div>
       <div className="list-scroll" ref={scrollRef}>

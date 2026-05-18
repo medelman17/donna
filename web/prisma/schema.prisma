@@ -19,6 +19,7 @@ model Candidate {
   hireable        Boolean?
   followers       Int       @default(0)
   publicRepos     Int       @default(0)
+  totalCommits    Int       @default(0)
   avatarUrl       String?
   htmlUrl         String?
   githubCreatedAt DateTime?

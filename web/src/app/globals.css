@@ -65,6 +65,7 @@ body {
   display: grid; place-items: center;
   color: #fff; font-size: 11px; font-weight: 700;
 }
+.topbar .tagline { color: var(--color-fg-subtle); font-size: 12px; font-weight: 400; }
 .topbar .crumb { color: var(--color-fg-subtle); font-size: 13px; }
 .topbar .crumb a { color: var(--color-fg-muted); text-decoration: none; }
 .topbar .crumb a:hover { color: var(--color-fg); }
@@ -92,14 +93,13 @@ body {
   padding: 8px 14px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-panel);
-  flex-wrap: wrap;
 }
 .toolbar .search {
   display: flex; align-items: center; gap: 6px;
   background: var(--color-bg-2);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-DEFAULT);
-  padding: 5px 8px; width: 280px;
+  padding: 5px 8px; width: 180px; min-width: 120px; flex-shrink: 1;
 }
 .toolbar .search:focus-within {
   border-color: color-mix(in oklab, var(--color-accent), transparent 50%);
@@ -232,7 +232,7 @@ body {
 .row .loc { color: var(--color-fg-subtle); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row .langs { display: flex; gap: 4px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
 .row .langs::-webkit-scrollbar { display: none; }
-.row .nums { color: var(--color-fg-muted); font-variant-numeric: tabular-nums; font-size: 12px; text-align: right; }
+.row .nums { color: var(--color-fg-muted); font-variant-numeric: tabular-nums; font-size: 12px; text-align: center; }
 .row .fit-cell { display: flex; justify-content: flex-start; align-items: center; }
 .row .stat { display: flex; justify-content: flex-start; }
 
@@ -637,6 +637,20 @@ body {
   background: var(--color-bg-2); display: grid; place-items: center;
 }
 .dim { color: var(--color-fg-subtle); }
+.seed-spinner {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 2.5px solid var(--color-border);
+  border-top-color: var(--color-accent, #6366f1);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.reseed-btn {
+  width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--color-border);
+  background: var(--color-panel); color: var(--color-fg-muted);
+  display: grid; place-items: center; cursor: pointer; font-size: 14px; flex-shrink: 0;
+}
+.reseed-btn:hover { background: var(--color-bg-2); color: var(--color-fg); }
+.reseed-spin { display: inline-block; animation: spin 0.8s linear infinite; }
 
 /* Bulk action bar */
 .bulk-bar {
@@ -866,6 +880,7 @@ body {
   .topbar { padding: 0 10px; gap: 8px; font-size: 12px; }
   .topbar .logo span { font-size: 14px; }
   .topbar .crumb { display: none; }
+  .topbar .tagline { display: none; }
   .topbar .meta { gap: 8px; font-size: 11px; }
   .topbar .meta .live-pill { display: none; }
   .topbar .meta .stats { display: none; }

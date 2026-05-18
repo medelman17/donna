@@ -73,9 +73,38 @@ const SORT_OPTS: PopoverOption[] = [
   { value: "fit-asc", label: "Fit score (low → high)" },
   { value: "followers-desc", label: "Followers" },
   { value: "repos-desc", label: "Public repos" },
+  { value: "commits-desc", label: "Commits" },
   { value: "fetched-desc", label: "Recently fetched" },
   { value: "name-asc", label: "Name (A–Z)" },
 ];
+
+function ReseedButton() {
+  const router = useRouter();
+  const [state, setState] = useState<"idle" | "seeding" | "done">("idle");
+
+  const reseed = async () => {
+    if (state === "seeding") return;
+    setState("seeding");
+    try {
+      await fetch("/api/seed", { method: "POST" }).then((r) => r.json());
+      await fetch("/api/seed/hydrate", { method: "POST" }).then((r) => r.json());
+      setState("done");
+      router.refresh();
+      setTimeout(() => setState("idle"), 2000);
+    } catch {
+      setState("idle");
+    }
+  };
+
+  return (
+    <button className="reseed-btn" onClick={reseed} disabled={state === "seeding"}
+      title="Sync new forkers, stargazers, contributors from GitHub">
+      <span className={state === "seeding" ? "reseed-spin" : ""}>
+        {state === "done" ? "✓" : "↻"}
+      </span>
+    </button>
+  );
+}
 
 export function FilterBar() {
   const router = useRouter();
@@ -138,6 +167,7 @@ export function FilterBar() {
           Saved
         </button>
       </div>
+      <ReseedButton />
       <div className="right">
         <FilterPopover label="Sort" value={get("sort", "fit-desc")} options={SORT_OPTS}
           onChange={v => set("sort", v)} align="right" />
