@@ -13,7 +13,6 @@ type ContentBlock =
 
 export function EnrichStream({ login, onDone }: { login: string; onDone: () => void }) {
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
-  const [partial, setPartial] = useState("");
   const [status, setStatus] = useState<"connecting" | "streaming" | "done">("connecting");
   const [elapsed, setElapsed] = useState(0);
   const [thinking, setThinking] = useState(false);
@@ -71,7 +70,6 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
 
         const decoder = new TextDecoder();
         let buffer = "";
-        let textAccum = "";
 
         while (true) {
           const { done, value } = await reader.read();
@@ -92,26 +90,16 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
               case "text":
                 lastTextRef.current = Date.now();
                 setThinking(false);
-                textAccum += evt.text;
-                setPartial(textAccum);
+                pushBlock({ type: "text", text: evt.text });
                 scheduleFlush();
                 break;
 
               case "sep":
-                if (textAccum) {
-                  pushBlock({ type: "text", text: textAccum });
-                  textAccum = "";
-                  setPartial("");
-                }
+                pushBlock({ type: "text", text: "\n\n" });
                 flush();
                 break;
 
               case "tool-start":
-                if (textAccum) {
-                  pushBlock({ type: "text", text: textAccum });
-                  textAccum = "";
-                  setPartial("");
-                }
                 pushBlock({ type: "tool", tool: evt.tool, status: "running" });
                 flush();
                 setThinking(true);
@@ -137,11 +125,6 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
                 break;
 
               case "done":
-                if (textAccum) {
-                  pushBlock({ type: "text", text: textAccum });
-                  textAccum = "";
-                  setPartial("");
-                }
                 flush();
                 setStatus("done");
                 setTimeout(() => {
@@ -153,10 +136,6 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
           }
         }
 
-        if (textAccum) {
-          pushBlock({ type: "text", text: textAccum });
-          setPartial("");
-        }
         cancelAnimationFrame(rafId);
         flush();
         if (status !== "done") setStatus("done");
@@ -164,7 +143,6 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
         if (e.name !== "AbortError") {
           console.error("[enrich-stream] error:", e);
         }
-        setPartial("");
         setThinking(false);
         setStatus("done");
       }
@@ -182,12 +160,11 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [blocks, partial, thinking]);
+  }, [blocks, thinking]);
 
   const abort = useCallback(() => {
     abortRef.current?.abort();
     setStatus("done");
-    setPartial("");
     setThinking(false);
   }, []);
 
@@ -250,7 +227,7 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
 
       {/* Content */}
       <div ref={scrollRef} style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}>
-        {blocks.length === 0 && !partial && status === "connecting" && (
+        {blocks.length === 0 && status === "connecting" && (
           <div style={{ color: "var(--color-fg-subtle)", fontSize: 13, padding: 20, textAlign: "center" }}>
             Starting enrichment agent...
           </div>
@@ -307,14 +284,6 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
             }
             return null;
           })}
-
-          {/* Streaming partial text */}
-          {partial && (
-            <div className="enrich-prose">
-              <span>{partial}</span>
-              <span className="enrich-cursor" />
-            </div>
-          )}
 
           {/* Thinking indicator */}
           {thinking && status === "streaming" && (
