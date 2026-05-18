@@ -9,11 +9,13 @@ export const redis =
 if (process.env.NODE_ENV !== "production") globalForRedis.redis = redis;
 
 export async function cacheGet(namespace: string, key: string): Promise<string | null> {
-  const hash = Buffer.from(key).toString("base64url").slice(0, 24);
+  const { createHash } = await import("crypto");
+  const hash = createHash("sha256").update(key).digest("hex").slice(0, 32);
   return redis.get(`scout:${namespace}:${hash}`);
 }
 
 export async function cacheSet(namespace: string, key: string, value: string, ttlSeconds = 86400): Promise<void> {
-  const hash = Buffer.from(key).toString("base64url").slice(0, 24);
+  const { createHash } = await import("crypto");
+  const hash = createHash("sha256").update(key).digest("hex").slice(0, 32);
   await redis.setex(`scout:${namespace}:${hash}`, ttlSeconds, value);
 }

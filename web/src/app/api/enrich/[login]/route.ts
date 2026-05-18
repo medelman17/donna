@@ -41,6 +41,7 @@ export async function POST(
   });
 
   const encoder = new TextEncoder();
+  const emittedCards = new Set<string>();
 
   function sse(event: string, data: unknown) {
     return encoder.encode(`data: ${JSON.stringify({ event, ...data as any })}\n\n`);
@@ -51,7 +52,8 @@ export async function POST(
     try {
       const data = JSON.parse(output);
 
-      if (toolName === "gh_query" && data.login && data.avatar_url) {
+      if (toolName === "gh_query" && data.login && data.avatar_url && !emittedCards.has("ProfileHeader")) {
+        emittedCards.add("ProfileHeader");
         cards.push({ card: "ProfileHeader", props: {
           name: data.name ?? null, login: data.login,
           avatar: data.avatar_url, bio: data.bio ?? null,
@@ -88,7 +90,8 @@ export async function POST(
         }).catch(() => {});
       }
 
-      if (toolName === "gh_query" && Array.isArray(data)) {
+      if (toolName === "gh_query" && Array.isArray(data) && !emittedCards.has("RepoCards")) {
+        emittedCards.add("RepoCards");
         const repos = data.filter((r: any) => r.name && r.full_name).slice(0, 5);
         for (const r of repos) {
           cards.push({ card: "RepoCard", props: {
