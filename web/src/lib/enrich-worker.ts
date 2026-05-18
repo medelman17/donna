@@ -256,7 +256,7 @@ async function runAnalysis(login: string, narrative: string) {
   ].filter(Boolean).join("\n\n");
 
   const { object: analysis } = await generateObject({
-    model: anthropic("claude-sonnet-4-6"),
+    model: anthropic("claude-opus-4-7"),
     schema: analysisSchema,
     prompt: [
       `Analyze this talent research report and extract a structured assessment.`,
@@ -295,7 +295,7 @@ async function runAnalysis(login: string, narrative: string) {
     isLawyer: analysis.isLawyer, hasOwnCompany: analysis.hasOwnCompany,
     companyName: analysis.companyName, aiExperience: analysis.aiExperience,
     legalTechRelevance: analysis.legalTechRelevance, communityActivity: analysis.communityActivity,
-    influenceLevel: analysis.influenceLevel, model: "claude-sonnet-4-6",
+    influenceLevel: analysis.influenceLevel, model: "claude-opus-4-7",
     rawJson: JSON.stringify(analysis),
   };
 
