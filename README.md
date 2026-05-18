@@ -249,16 +249,18 @@ To manually re-sync and pick up new stargazers/contributors, click the **↻** b
 
 ### Environment
 
-API keys can be entered through the UI during onboarding, or set as environment variables in `mise.local.toml`:
+All API keys can be entered through the UI (onboarding or Settings) or set as environment variables in `mise.local.toml`. Keys entered via UI are stored in the database and take precedence over environment variables.
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `ANTHROPIC_API_KEY` | Via UI or env | Claude API for enrichment + analysis |
-| `FIRECRAWL_API_KEY` | Yes | Web search and page scraping |
-| `BROWSERBASE_API_KEY` | For LinkedIn/Twitter | Headless browser sessions |
-| `BROWSERBASE_PROJECT_ID` | For LinkedIn/Twitter | Browserbase project |
-| `DATABASE_URL` | Auto | `postgresql://...@localhost:54320/scout` |
-| `REDIS_URL` | Auto | `redis://localhost:63790` |
+| Variable | Required | Purpose | Without It |
+|----------|----------|---------|------------|
+| `ANTHROPIC_API_KEY` | **Yes** | Claude API for enrichment + analysis | Nothing works |
+| `FIRECRAWL_API_KEY` | Recommended | Web search and page scraping | No Google search, no web scraping — GitHub-only enrichment |
+| `BROWSERBASE_API_KEY` | Optional | Headless browser sessions | No LinkedIn/Twitter scraping — falls back to Firecrawl search |
+| `BROWSERBASE_PROJECT_ID` | With above | Browserbase project | Same as above |
+| `DATABASE_URL` | Auto | `postgresql://...@localhost:54320/scout` | — |
+| `REDIS_URL` | Auto | `redis://localhost:63790` | — |
+
+Only the Anthropic key is required. Each additional key unlocks more tools, but Donna degrades gracefully without them.
 
 ### Infrastructure
 

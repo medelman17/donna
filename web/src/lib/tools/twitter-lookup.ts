@@ -26,8 +26,9 @@ export const twitterLookupTool = tool({
   }),
   execute: async ({ handle }) => {
     const cleanHandle = handle.replace(/^@/, "");
-    const bbKey = process.env.BROWSERBASE_API_KEY;
-    const bbProject = process.env.BROWSERBASE_PROJECT_ID;
+    const { getBrowserbaseApiKey, getBrowserbaseProjectId } = await import("@/lib/api-keys");
+    const bbKey = await getBrowserbaseApiKey();
+    const bbProject = await getBrowserbaseProjectId();
 
     if (!bbKey || !bbProject) {
       return firecrawlFallback(cleanHandle);
@@ -73,7 +74,8 @@ export const twitterLookupTool = tool({
 });
 
 async function firecrawlFallback(handle: string): Promise<string> {
-  const apiKey = process.env.FIRECRAWL_API_KEY;
+  const { getFirecrawlApiKey } = await import("@/lib/api-keys");
+  const apiKey = await getFirecrawlApiKey();
   if (!apiKey) return "Error: neither BROWSERBASE nor FIRECRAWL configured";
 
   try {

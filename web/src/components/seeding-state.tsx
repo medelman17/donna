@@ -15,6 +15,9 @@ const PIPELINE_STEPS = [
 
 function SetupForm({ onComplete }: { onComplete: () => void }) {
   const [apiKey, setApiKey] = useState("");
+  const [firecrawlKey, setFirecrawlKey] = useState("");
+  const [bbKey, setBbKey] = useState("");
+  const [bbProject, setBbProject] = useState("");
   const [company, setCompany] = useState("");
   const [positions, setPositions] = useState<DraftPosition[]>([{ title: "", description: "" }]);
   const [prefs, setPrefs] = useState<DraftPref[]>([{ tag: "", description: "", weight: 2 }]);
@@ -35,11 +38,19 @@ function SetupForm({ onComplete }: { onComplete: () => void }) {
     try {
       const headers = { "Content-Type": "application/json" };
 
-      if (apiKey.trim()) {
-        await fetch("/api/settings", {
-          method: "PUT", headers,
-          body: JSON.stringify({ key: "anthropic_api_key", value: apiKey.trim() }),
-        });
+      const keys = [
+        ["anthropic_api_key", apiKey],
+        ["firecrawl_api_key", firecrawlKey],
+        ["browserbase_api_key", bbKey],
+        ["browserbase_project_id", bbProject],
+      ] as const;
+      for (const [key, value] of keys) {
+        if (value.trim()) {
+          await fetch("/api/settings", {
+            method: "PUT", headers,
+            body: JSON.stringify({ key, value: value.trim() }),
+          });
+        }
       }
 
       if (company.trim()) {
@@ -74,15 +85,18 @@ function SetupForm({ onComplete }: { onComplete: () => void }) {
   return (
     <div className="onboarding-setup">
       <div className="setup-section">
-        <label className="setup-label">Anthropic API key</label>
-        <input
-          className="setup-input"
-          type="password"
-          placeholder="sk-ant-..."
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-        />
-        <span className="setup-hint">Required for enrichment. Leave blank if set via environment variable.</span>
+        <label className="setup-label">API keys</label>
+        <span className="setup-hint">Leave blank if set via environment variables.</span>
+        <input className="setup-input" type="password" placeholder="Anthropic — sk-ant-... (required)"
+          value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+        <input className="setup-input" type="password" placeholder="Firecrawl — for web search + scraping"
+          value={firecrawlKey} onChange={(e) => setFirecrawlKey(e.target.value)} />
+        <div style={{ display: "flex", gap: 6 }}>
+          <input className="setup-input" style={{ flex: 1 }} type="password" placeholder="Browserbase API key"
+            value={bbKey} onChange={(e) => setBbKey(e.target.value)} />
+          <input className="setup-input" style={{ flex: 1 }} placeholder="Browserbase project ID"
+            value={bbProject} onChange={(e) => setBbProject(e.target.value)} />
+        </div>
       </div>
 
       <div className="setup-section">

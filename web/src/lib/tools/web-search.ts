@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { cacheGet, cacheSet } from "@/lib/redis";
+import { getFirecrawlApiKey } from "@/lib/api-keys";
 
 export const webSearchTool = tool({
   description: "Search Google for a person or topic. Returns titles, URLs, and snippets.",
@@ -12,7 +13,7 @@ export const webSearchTool = tool({
     const cached = await cacheGet("search", query);
     if (cached) return cached;
 
-    const apiKey = process.env.FIRECRAWL_API_KEY;
+    const apiKey = await getFirecrawlApiKey();
     if (!apiKey) return "Error: FIRECRAWL_API_KEY not set";
 
     try {

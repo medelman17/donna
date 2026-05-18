@@ -28,13 +28,13 @@ function SaveIndicator({ state }: { state: null | "saving" | "saved" }) {
 }
 
 export default function SettingsPage() {
-  const [apiKey, setApiKey] = useState("");
+  const [keys, setKeys] = useState<Record<string, string>>({});
   const [companyDesc, setCompanyDesc] = useState("");
   const [positions, setPositions] = useState<Position[]>([]);
   const [prefs, setPrefs] = useState<Preference[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const apiKeyDebRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const [apiKeySave, setApiKeySave] = useState<null | "saving" | "saved">(null);
+  const keyDebRefs = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const [keySaveStates, setKeySaveStates] = useState<Record<string, null | "saving" | "saved">>({});
   const companyDebRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [companySave, setCompanySave] = useState<null | "saving" | "saved">(null);
 
@@ -44,7 +44,12 @@ export default function SettingsPage() {
       fetch("/api/settings/positions").then(r => r.json()),
       fetch("/api/settings/preferences").then(r => r.json()),
     ]).then(([settings, pos, prf]) => {
-      setApiKey(settings.anthropic_api_key ?? "");
+      setKeys({
+        anthropic_api_key: settings.anthropic_api_key ?? "",
+        firecrawl_api_key: settings.firecrawl_api_key ?? "",
+        browserbase_api_key: settings.browserbase_api_key ?? "",
+        browserbase_project_id: settings.browserbase_project_id ?? "",
+      });
       setCompanyDesc(settings.company_description ?? "");
       setPositions(pos);
       setPrefs(prf);
@@ -52,18 +57,18 @@ export default function SettingsPage() {
     });
   }, []);
 
-  const handleApiKey = (v: string) => {
-    setApiKey(v);
-    clearTimeout(apiKeyDebRef.current);
-    setApiKeySave("saving");
-    apiKeyDebRef.current = setTimeout(async () => {
+  const handleKey = (settingKey: string, v: string) => {
+    setKeys(prev => ({ ...prev, [settingKey]: v }));
+    clearTimeout(keyDebRefs.current[settingKey]);
+    setKeySaveStates(prev => ({ ...prev, [settingKey]: "saving" }));
+    keyDebRefs.current[settingKey] = setTimeout(async () => {
       await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: "anthropic_api_key", value: v }),
+        body: JSON.stringify({ key: settingKey, value: v }),
       });
-      setApiKeySave("saved");
-      setTimeout(() => setApiKeySave(null), 1200);
+      setKeySaveStates(prev => ({ ...prev, [settingKey]: "saved" }));
+      setTimeout(() => setKeySaveStates(prev => ({ ...prev, [settingKey]: null })), 1200);
     }, 600);
   };
 
@@ -152,19 +157,39 @@ export default function SettingsPage() {
           Configure your company context. This information is available to both the enrichment research agent and the analysis agent — it informs how candidates are evaluated, what signals to prioritize, and how fit scores are calculated.
         </p>
 
-        {/* API Key */}
+        {/* API Keys */}
         <section>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <h2 style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>Anthropic API Key</h2>
-            <SaveIndicator state={apiKeySave} />
+            <h2 style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>API Keys</h2>
+            <SaveIndicator state={Object.values(keySaveStates).find(s => s === "saving") ? "saving" : Object.values(keySaveStates).find(s => s === "saved") ? "saved" : null} />
           </div>
-          <input
-            type="password"
-            value={apiKey}
-            onChange={e => handleApiKey(e.target.value)}
-            placeholder="sk-ant-... (leave blank to use environment variable)"
-            style={{ ...inputStyle, width: "100%" }}
-          />
+          <p style={{ fontSize: 12.5, color: "var(--color-fg-muted)", margin: "0 0 10px", lineHeight: 1.5 }}>
+            Leave blank to use environment variables. Only the Anthropic key is required — Firecrawl and Browserbase enable additional tools.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div>
+              <label style={{ fontSize: 11.5, color: "var(--color-fg-subtle)", marginBottom: 2, display: "block" }}>Anthropic (required)</label>
+              <input type="password" value={keys.anthropic_api_key ?? ""} onChange={e => handleKey("anthropic_api_key", e.target.value)}
+                placeholder="sk-ant-..." style={{ ...inputStyle, width: "100%" }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11.5, color: "var(--color-fg-subtle)", marginBottom: 2, display: "block" }}>Firecrawl (web search + scraping)</label>
+              <input type="password" value={keys.firecrawl_api_key ?? ""} onChange={e => handleKey("firecrawl_api_key", e.target.value)}
+                placeholder="fc-..." style={{ ...inputStyle, width: "100%" }} />
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: 11.5, color: "var(--color-fg-subtle)", marginBottom: 2, display: "block" }}>Browserbase API key (LinkedIn + Twitter)</label>
+                <input type="password" value={keys.browserbase_api_key ?? ""} onChange={e => handleKey("browserbase_api_key", e.target.value)}
+                  placeholder="bb-..." style={{ ...inputStyle, width: "100%" }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: 11.5, color: "var(--color-fg-subtle)", marginBottom: 2, display: "block" }}>Browserbase project ID</label>
+                <input value={keys.browserbase_project_id ?? ""} onChange={e => handleKey("browserbase_project_id", e.target.value)}
+                  placeholder="Project ID" style={{ ...inputStyle, width: "100%" }} />
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Company Description */}

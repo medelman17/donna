@@ -33,8 +33,9 @@ export const linkedinLookupTool = tool({
     company: z.string().optional().describe("Current or recent company"),
   }),
   execute: async ({ name, company }) => {
-    const bbKey = process.env.BROWSERBASE_API_KEY;
-    const bbProject = process.env.BROWSERBASE_PROJECT_ID;
+    const { getBrowserbaseApiKey, getBrowserbaseProjectId } = await import("@/lib/api-keys");
+    const bbKey = await getBrowserbaseApiKey();
+    const bbProject = await getBrowserbaseProjectId();
 
     if (!bbKey || !bbProject) {
       return firecrawlFallback(name, company);
@@ -96,7 +97,8 @@ export const linkedinLookupTool = tool({
 });
 
 async function firecrawlFallback(name: string, company?: string): Promise<string> {
-  const apiKey = process.env.FIRECRAWL_API_KEY;
+  const { getFirecrawlApiKey } = await import("@/lib/api-keys");
+  const apiKey = await getFirecrawlApiKey();
   if (!apiKey) return "Error: neither BROWSERBASE nor FIRECRAWL configured";
 
   const query = `"${name}" ${company ? `"${company}"` : ""} site:linkedin.com/in`.trim();

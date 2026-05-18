@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { cacheGet, cacheSet } from "@/lib/redis";
+import { getFirecrawlApiKey } from "@/lib/api-keys";
 
 export const webScrapeTool = tool({
   description: "Extract content from a URL as clean markdown. Good for blogs, personal sites, articles. Do NOT use on linkedin.com — use linkedin_lookup instead.",
@@ -12,7 +13,7 @@ export const webScrapeTool = tool({
     const cached = await cacheGet("scrape", url);
     if (cached) return cached;
 
-    const apiKey = process.env.FIRECRAWL_API_KEY;
+    const apiKey = await getFirecrawlApiKey();
     if (!apiKey) return "Error: FIRECRAWL_API_KEY not set";
 
     try {
