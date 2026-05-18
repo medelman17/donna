@@ -194,14 +194,26 @@ def insert_web_mentions(conn: psycopg.Connection, login: str, mentions: list[dic
 
 def insert_enrichment_log(
     conn: psycopg.Connection, login: str, tool: str,
-    input_data: dict, output_data: Any, duration_ms: int | None = None,
+    input_data: Any, output_data: Any, duration_ms: int | None = None,
     error: str | None = None,
 ) -> None:
-    output_str = json.dumps(output_data, default=str)[:10000] if output_data else "{}"
+    try:
+        input_json = json.dumps(input_data, default=str) if input_data else "{}"
+    except Exception:
+        input_json = json.dumps({"raw": str(input_data)[:500]})
+    try:
+        if isinstance(output_data, str):
+            output_json = json.dumps({"text": output_data[:5000]})
+        elif output_data is not None:
+            output_json = json.dumps(output_data, default=str)[:10000]
+        else:
+            output_json = "{}"
+    except Exception:
+        output_json = json.dumps({"raw": str(output_data)[:500]})
     conn.execute(
         """INSERT INTO "EnrichmentLog" ("candidateLogin", tool, input, output, "durationMs", error, "createdAt")
            VALUES (%s, %s, %s::jsonb, %s::jsonb, %s, %s, %s)""",
-        (login, tool, json.dumps(input_data), output_str, duration_ms, error,
+        (login, tool, input_json, output_json, duration_ms, error,
          datetime.now(timezone.utc).isoformat()),
     )
 

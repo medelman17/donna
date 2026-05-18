@@ -76,7 +76,6 @@ CREATE TABLE "Profile" (
     "promptVersion" INTEGER NOT NULL DEFAULT 1,
     "generatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "rawJson" TEXT,
-    "embedding" vector(1536),
 
     CONSTRAINT "Profile_pkey" PRIMARY KEY ("id")
 );

@@ -23,7 +23,6 @@ def cache_get(namespace: str, key: str) -> Any | None:
     cache_key = f"scout:{namespace}:{_hash(key)}"
     val = r.get(cache_key)
     if val:
-        console.print(f"      [dim]cache hit: {namespace}/{key[:60]}[/dim]")
         return json.loads(val)
     return None
 

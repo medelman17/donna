@@ -4,7 +4,6 @@ from typing import Any
 
 from pydantic import BaseModel
 from rich.console import Console
-from stagehand import AsyncStagehand
 
 from scout.config import get_browserbase_keys, get_api_key
 
@@ -50,19 +49,26 @@ async def scrape_linkedin(name: str | None, company: str | None, login: str) -> 
         search_terms.append(login)
     search_query = " ".join(search_terms) + " site:linkedin.com/in"
 
+    console.print(f"    [dim]LinkedIn: searching Google for:[/dim] {search_query}")
+
     try:
+        from stagehand import AsyncStagehand
+
+        console.print(f"    [dim]LinkedIn: connecting to Browserbase...[/dim]")
         async with AsyncStagehand(
             server="remote",
             browserbase_api_key=bb_key,
             browserbase_project_id=bb_project,
             model_api_key=model_key,
         ) as client:
+            console.print(f"    [dim]LinkedIn: starting browser session...[/dim]")
             session = await client.sessions.start(
                 model_name="anthropic/claude-sonnet-4-6",
                 browser={"type": "browserbase"},
             )
 
             try:
+                console.print(f"    [dim]LinkedIn: agent navigating Google → LinkedIn (max 8 steps)...[/dim]")
                 await session.execute(
                     execute_options={
                         "instruction": (
@@ -75,6 +81,7 @@ async def scrape_linkedin(name: str | None, company: str | None, login: str) -> 
                     agent_config={"model": "anthropic/claude-sonnet-4-6"},
                     timeout=60.0,
                 )
+                console.print(f"    [dim]LinkedIn: extracting profile data...[/dim]")
 
                 result = await session.extract(
                     instruction=(
@@ -88,6 +95,13 @@ async def scrape_linkedin(name: str | None, company: str | None, login: str) -> 
 
                 profile = result.data.result
                 if profile and isinstance(profile, LinkedInProfileData):
+                    exp_count = len(profile.experience)
+                    skill_count = len(profile.skills)
+                    console.print(
+                        f"    [green]LinkedIn: extracted[/green] — "
+                        f"{profile.headline or 'no headline'}, "
+                        f"{exp_count} roles, {skill_count} skills"
+                    )
                     return {
                         "profile_url": profile.profile_url,
                         "headline": profile.headline,
@@ -99,10 +113,13 @@ async def scrape_linkedin(name: str | None, company: str | None, login: str) -> 
                         "skills": profile.skills,
                         "certifications": profile.certifications,
                     }
+                else:
+                    console.print(f"    [yellow]LinkedIn: extraction returned empty result[/yellow]")
             finally:
+                console.print(f"    [dim]LinkedIn: ending session[/dim]")
                 await session.end()
 
     except Exception as e:
-        console.print(f"  [yellow]LinkedIn scrape failed for {login}: {e}[/yellow]")
+        console.print(f"    [red]LinkedIn: failed — {type(e).__name__}: {e}[/red]")
 
     return None

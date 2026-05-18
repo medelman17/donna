@@ -88,7 +88,7 @@ model Profile {
   promptVersion       Int       @default(1)
   generatedAt         DateTime  @default(now())
   rawJson             String?
-  embedding           Unsupported("vector(1536)")?
+  // embedding added via raw SQL after migration: ALTER TABLE "Profile" ADD COLUMN embedding vector(1536);
 }
 
 model Signal {

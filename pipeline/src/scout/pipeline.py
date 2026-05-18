@@ -38,11 +38,18 @@ def run_fetch_forks() -> int:
     return len(forks)
 
 
-def run_enrich(limit: int | None = None) -> int:
+def run_enrich(limit: int | None = None, force: bool = False) -> int:
     conn = db.connect()
-    logins = db.get_unenriched_logins(conn, limit)
+    if force:
+        sql = """SELECT login FROM "Candidate" ORDER BY login"""
+        if limit:
+            sql += f" LIMIT {limit}"
+        logins = [r["login"] for r in conn.execute(sql).fetchall()]
+    else:
+        logins = db.get_unenriched_logins(conn, limit)
     conn.close()
-    console.print(f"[bold]Agent-enriching {len(logins)} candidates[/bold]\n")
+    mode = "Re-enriching" if force else "Agent-enriching"
+    console.print(f"[bold]{mode} {len(logins)} candidates[/bold]\n")
 
     enriched = 0
     for i, login in enumerate(logins, 1):

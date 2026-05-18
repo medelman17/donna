@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", message="Field name.*shadows an attribute in parent")
+
 from typing import Optional
 
 import typer
@@ -19,10 +22,19 @@ def fetch_forks():
 
 
 @app.command()
-def enrich(limit: Optional[int] = typer.Option(None, help="Max candidates to enrich")):
+def enrich(
+    limit: Optional[int] = typer.Option(None, help="Max candidates to enrich"),
+    force: bool = typer.Option(False, "--force", "-f", help="Re-enrich even if already enriched"),
+    login: Optional[str] = typer.Option(None, "--login", "-l", help="Enrich a specific candidate"),
+):
     """Agent-driven enrichment (GitHub + web + LinkedIn) per candidate."""
-    count = pipeline.run_enrich(limit)
-    console.print(f"[bold green]Done.[/bold green] {count} candidates enriched.")
+    if login:
+        from scout.enrich import enrich_candidate
+        result = enrich_candidate(login)
+        console.print(f"[bold green]Done.[/bold green] {result['tool_calls']} tool calls.")
+    else:
+        count = pipeline.run_enrich(limit, force=force)
+        console.print(f"[bold green]Done.[/bold green] {count} candidates enriched.")
 
 
 @app.command()
