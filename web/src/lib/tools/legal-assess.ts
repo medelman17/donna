@@ -19,7 +19,7 @@ export const legalAssessTool = tool({
   execute: async ({ login, context }, { abortSignal }) => {
     try {
       const { text } = await generateText({
-        model: anthropic("claude-opus-4-7"),
+        model: anthropic("claude-opus-4-6"),
         system: LEGAL_PROMPT,
         prompt: `Assess legal-tech relevance for '${login}'. Context: ${context || "none"}`,
         tools: { gh_query: ghQueryTool, web_search: webSearchTool },

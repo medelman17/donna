@@ -56,7 +56,7 @@ export async function runEnrichment(login: string) {
   const emittedCards = new Set<string>();
 
   const result = streamText({
-    model: anthropic("claude-opus-4-7"),
+    model: anthropic("claude-opus-4-6"),
     system: ENRICHMENT_SYSTEM_PROMPT,
     prompt: `Research the GitHub developer '${login}' who forked willchen96/mike (an AI legal platform). Start by pulling their GitHub data, then use what you find to search the web for their professional presence.`,
     tools: enrichmentTools,
@@ -148,9 +148,9 @@ export async function runEnrichment(login: string) {
       }
     }
   } catch (e: any) {
-    if (e.name !== "AbortError") {
-      pub(login, "done");
-    }
+    console.error(`[enrich-worker] ${login} error:`, e.message, e.stack?.slice(0, 300));
+    pub(login, "text", { text: `\n\n**Enrichment error:** ${e.message}\n` });
+    pub(login, "done");
   } finally {
     await clearActiveJob(login);
   }
@@ -256,7 +256,7 @@ async function runAnalysis(login: string, narrative: string) {
   ].filter(Boolean).join("\n\n");
 
   const { object: analysis } = await generateObject({
-    model: anthropic("claude-opus-4-7"),
+    model: anthropic("claude-opus-4-6"),
     schema: analysisSchema,
     prompt: [
       `Analyze this talent research report and extract a structured assessment.`,
@@ -295,7 +295,7 @@ async function runAnalysis(login: string, narrative: string) {
     isLawyer: analysis.isLawyer, hasOwnCompany: analysis.hasOwnCompany,
     companyName: analysis.companyName, aiExperience: analysis.aiExperience,
     legalTechRelevance: analysis.legalTechRelevance, communityActivity: analysis.communityActivity,
-    influenceLevel: analysis.influenceLevel, model: "claude-opus-4-7",
+    influenceLevel: analysis.influenceLevel, model: "claude-opus-4-6",
     rawJson: JSON.stringify(analysis),
   };
 
