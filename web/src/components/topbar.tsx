@@ -19,7 +19,6 @@ export async function Topbar({ candidateLogin }: Props) {
         <span>Donna</span>
       </div>
       <span className="crumb">
-        <span style={{ color: "var(--color-fg-subtle)", fontStyle: "italic", fontSize: 12 }}>Legal tech talent discovery for well-suited candidates</span>
         {candidateLogin && (
           <> / <Link href="/">Candidates</Link> / <span style={{ color: "var(--color-fg-muted)" }}>@{candidateLogin}</span></>
         )}
