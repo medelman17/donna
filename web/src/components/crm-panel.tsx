@@ -61,30 +61,22 @@ export function CrmPanel({
   const flash = () => {
     setSaving("saving");
     clearTimeout(debRef.current);
-    debRef.current = setTimeout(() => {
-      setSaving("saved");
-      setTimeout(() => setSaving(null), 1400);
-    }, 420);
+    debRef.current = setTimeout(() => { setSaving("saved"); setTimeout(() => setSaving(null), 1400); }, 420);
   };
 
   const handleStatus = (v: string) => { setStatus(v); updateCrm(login, { status: v }); flash(); };
   const handleBookmark = () => { const next = !bookmarked; setBookmarked(next); updateCrm(login, { bookmarked: next }); flash(); };
   const handleNotes = (v: string) => {
-    setNotes(v);
-    clearTimeout(debRef.current);
-    setSaving("saving");
+    setNotes(v); clearTimeout(debRef.current); setSaving("saving");
     debRef.current = setTimeout(() => { updateCrm(login, { notes: v }); setSaving("saved"); setTimeout(() => setSaving(null), 1400); }, 600);
   };
   const handleTags = (v: string) => {
-    setTagInput(v);
-    clearTimeout(debRef.current);
-    setSaving("saving");
+    setTagInput(v); clearTimeout(debRef.current); setSaving("saving");
     debRef.current = setTimeout(() => { updateCrm(login, { tags: v }); setSaving("saved"); setTimeout(() => setSaving(null), 1400); }, 600);
   };
 
   const acctAge = githubCreatedAt ? Math.floor((Date.now() - new Date(githubCreatedAt).getTime()) / (365 * 24 * 3600 * 1000)) : null;
   const savedTags = tagInput.split(",").map(t => t.trim()).filter(Boolean);
-
   const savingEl = saving === "saving" ? <span className="saving">Saving…</span> : saving === "saved" ? <span className="saving ok">✓ Saved</span> : null;
 
   const quickFacts = [
@@ -96,40 +88,8 @@ export function CrmPanel({
 
   return (
     <div className="aside">
-      {/* Header: bookmark + status + tags */}
-      <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <select value={status} onChange={e => handleStatus(e.target.value)} style={{ fontSize: 12, padding: "3px 6px", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border)", background: "var(--color-bg-2)", color: "var(--color-fg)" }}>
-              {["new", "reviewing", "interested", "contacted", "passed", "hired"].map(s => (
-                <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>
-              ))}
-            </select>
-            {savingEl}
-          </div>
-          <button onClick={handleBookmark} title={bookmarked ? "Remove bookmark" : "Bookmark"} style={{
-            appearance: "none", border: "1px solid " + (bookmarked ? "color-mix(in oklab, #f59e0b, transparent 40%)" : "var(--color-border)"),
-            background: bookmarked ? "color-mix(in oklab, #f59e0b, transparent 90%)" : "transparent",
-            color: bookmarked ? "#f59e0b" : "var(--color-fg-subtle)", borderRadius: "var(--radius-DEFAULT)",
-            padding: "3px 10px", fontSize: 13, fontWeight: 500, cursor: "pointer",
-            display: "flex", alignItems: "center", gap: 4, transition: "all 0.15s ease",
-          }}>
-            {bookmarked ? "★" : "☆"} {bookmarked ? "Saved" : "Save"}
-          </button>
-        </div>
-        <div className="field" style={{ marginBottom: 0 }}>
-          <input type="text" placeholder="Tags: q2-batch, warm-intro" value={tagInput} onChange={e => handleTags(e.target.value)}
-            style={{ fontSize: 12, padding: "5px 8px" }} />
-          {savedTags.length > 0 && (
-            <div className="tags-cloud" style={{ marginTop: 4 }}>
-              {savedTags.map(t => <span key={t} className="tag">{t}</span>)}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Tab bar */}
-      <div style={{ position: "relative", borderBottom: "1px solid var(--color-border)", marginTop: 4 }}>
+      {/* Tab bar at very top */}
+      <div style={{ position: "relative", borderBottom: "1px solid var(--color-border)", margin: "-14px -14px 0", padding: "0 14px" }}>
         <div style={{ display: "flex", gap: 0 }}>
           {TABS.map(tab => (
             <button
@@ -138,26 +98,45 @@ export function CrmPanel({
               onClick={() => setActiveTab(tab.id)}
               style={{
                 appearance: "none", border: "none", background: "transparent", cursor: "pointer",
-                padding: "8px 14px", fontSize: 12, fontWeight: activeTab === tab.id ? 600 : 400,
+                padding: "10px 14px", fontSize: 12, fontWeight: activeTab === tab.id ? 600 : 400,
                 color: activeTab === tab.id ? "var(--color-fg)" : "var(--color-fg-subtle)",
                 transition: "color 0.15s",
               }}
-            >
-              {tab.label}
-            </button>
+            >{tab.label}</button>
           ))}
         </div>
         <div style={{
           position: "absolute", bottom: -1, height: 2, borderRadius: 1,
           background: "var(--color-accent)",
-          left: indicator.left, width: indicator.width,
+          left: indicator.left + 14, width: indicator.width,
           transition: "left 0.2s cubic-bezier(0.4, 0, 0.2, 1), width 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
         }} />
       </div>
 
-      {/* Tab content */}
+      {/* Details tab */}
       {activeTab === "details" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Status + Tags */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <select value={status} onChange={e => handleStatus(e.target.value)}
+                style={{ fontSize: 12, padding: "4px 8px", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border)", background: "var(--color-bg-2)", color: "var(--color-fg)", flex: 1 }}>
+                {["new", "reviewing", "interested", "contacted", "passed", "hired"].map(s => (
+                  <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>
+                ))}
+              </select>
+              {savingEl}
+            </div>
+            <input type="text" placeholder="Tags: q2-batch, warm-intro" value={tagInput} onChange={e => handleTags(e.target.value)}
+              style={{ width: "100%", fontSize: 12, padding: "5px 8px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-bg-2)", color: "var(--color-fg)", fontFamily: "inherit" }} />
+            {savedTags.length > 0 && (
+              <div className="tags-cloud" style={{ marginTop: 4 }}>
+                {savedTags.map(t => <span key={t} className="tag">{t}</span>)}
+              </div>
+            )}
+          </div>
+
+          {/* Snapshot */}
           <div>
             <h3>Snapshot</h3>
             <div className="qstats">
@@ -179,6 +158,7 @@ export function CrmPanel({
             )}
           </div>
 
+          {/* Triage */}
           {(followers > 0 || publicRepos > 0) && (() => {
             const profileDepth = [name, bio, blog, twitter, company].filter(Boolean).length;
             const repoScore = Math.min(5, Math.floor(publicRepos / 3));
@@ -216,6 +196,7 @@ export function CrmPanel({
             );
           })()}
 
+          {/* Fork */}
           <div>
             <h3>Fork</h3>
             <div style={{ fontSize: 12.5, color: "var(--color-fg-muted)", lineHeight: 1.55 }}>
@@ -227,6 +208,7 @@ export function CrmPanel({
             </div>
           </div>
 
+          {/* Keyboard */}
           <div>
             <h3>Keyboard</h3>
             <div className="kbd-help">
@@ -238,13 +220,14 @@ export function CrmPanel({
         </div>
       )}
 
+      {/* Notes tab */}
       {activeTab === "notes" && (
-        <div style={{ paddingTop: 8 }}>
+        <div style={{ paddingTop: 4 }}>
           <textarea
             placeholder="Add notes about this candidate..."
             value={notes}
             onChange={e => handleNotes(e.target.value)}
-            style={{ width: "100%", minHeight: 200, fontSize: 13, lineHeight: 1.6, padding: "10px 12px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-DEFAULT)", background: "var(--color-bg-2)", color: "var(--color-fg)", resize: "vertical", fontFamily: "inherit" }}
+            style={{ width: "100%", minHeight: 280, fontSize: 13, lineHeight: 1.6, padding: "10px 12px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-DEFAULT)", background: "var(--color-bg-2)", color: "var(--color-fg)", resize: "vertical", fontFamily: "inherit" }}
           />
         </div>
       )}
