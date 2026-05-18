@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model Candidate {
@@ -23,15 +23,17 @@ model Candidate {
   githubCreatedAt DateTime?
   fetchedAt       DateTime  @default(now())
 
-  forkMeta    ForkMeta?
-  repos       Repo[]
-  events      Event[]
-  profile     Profile?
-  signals     Signal[]
-  skills      Skill[]
-  crm         Crm?
-  linkedIn    LinkedInProfile?
-  webMentions WebMention[]
+  forkMeta        ForkMeta?
+  repos           Repo[]
+  events          Event[]
+  profile         Profile?
+  signals         Signal[]
+  skills          Skill[]
+  crm             Crm?
+  linkedIn        LinkedInProfile?
+  webMentions     WebMention[]
+  enrichmentLogs  EnrichmentLog[]
+  agentMemories   AgentMemory[]
 }
 
 model ForkMeta {
@@ -86,6 +88,7 @@ model Profile {
   promptVersion       Int       @default(1)
   generatedAt         DateTime  @default(now())
   rawJson             String?
+  embedding           Unsupported("vector(1536)")?
 }
 
 model Signal {
@@ -140,4 +143,32 @@ model WebMention {
   source         String
   content        String?
   scrapedAt      DateTime  @default(now())
+}
+
+model EnrichmentLog {
+  id             Int       @id @default(autoincrement())
+  candidateLogin String
+  candidate      Candidate @relation(fields: [candidateLogin], references: [login], onDelete: Cascade)
+  tool           String
+  input          Json
+  output         Json
+  durationMs     Int?
+  error          String?
+  createdAt      DateTime  @default(now())
+
+  @@index([candidateLogin])
+  @@index([tool])
+  @@index([createdAt])
+}
+
+model AgentMemory {
+  id             Int        @id @default(autoincrement())
+  key            String     @unique
+  value          String
+  candidateLogin String?
+  candidate      Candidate? @relation(fields: [candidateLogin], references: [login], onDelete: SetNull)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([candidateLogin])
 }
