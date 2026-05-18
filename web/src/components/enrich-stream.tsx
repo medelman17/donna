@@ -163,11 +163,42 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
     };
   }, [login]);
 
+  const [isNearBottom, setIsNearBottom] = useState(true);
+  const [hasNewBelow, setHasNewBelow] = useState(false);
+
+  const checkNearBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return true;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  }, []);
+
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const near = checkNearBottom();
+      setIsNearBottom(near);
+      if (near) setHasNewBelow(false);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [checkNearBottom]);
+
+  useEffect(() => {
+    if (isNearBottom && scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    } else if (status === "streaming") {
+      setHasNewBelow(true);
     }
   }, [blocks, thinking]);
+
+  const scrollToBottom = useCallback(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+      setHasNewBelow(false);
+      setIsNearBottom(true);
+    }
+  }, []);
 
   const abort = useCallback(() => {
     abortRef.current?.abort();
@@ -357,6 +388,42 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
             </AnimatePresence>
           </div>
         </LazyMotion>
+
+        {/* Scroll-to-bottom pill */}
+        <AnimatePresence>
+          {hasNewBelow && status === "streaming" && (
+            <motion.button
+              key="scroll-btn"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              onClick={scrollToBottom}
+              style={{
+                position: "sticky",
+                bottom: 12,
+                left: "50%",
+                transform: "translateX(-50%)",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 14px",
+                borderRadius: 999,
+                border: "1px solid var(--color-border)",
+                background: "var(--color-panel)",
+                boxShadow: "0 4px 12px rgba(15, 17, 28, 0.1), 0 1px 3px rgba(15, 17, 28, 0.06)",
+                color: "var(--color-accent)",
+                fontSize: 11.5,
+                fontWeight: 500,
+                fontFamily: "inherit",
+                cursor: "pointer",
+                zIndex: 10,
+              }}
+            >
+              ↓ New content below
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
