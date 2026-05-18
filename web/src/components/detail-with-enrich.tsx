@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import { EnrichStream } from "./enrich-stream";
+
+const EnrichCtx = createContext<(() => void) | null>(null);
+export function useEnrich() { return useContext(EnrichCtx); }
 
 export function DetailWithEnrich({
   login,
@@ -33,13 +36,12 @@ export function DetailWithEnrich({
   }
 
   return (
-    <main className="detail-main">
-      <div className="dx" style={{ position: "relative" }}>
-        <button className="enrich-fab" onClick={() => setStreaming(true)}>
-          ▶ Enrich
-        </button>
-        {children}
-      </div>
-    </main>
+    <EnrichCtx.Provider value={() => setStreaming(true)}>
+      <main className="detail-main">
+        <div className="dx">
+          {children}
+        </div>
+      </main>
+    </EnrichCtx.Provider>
   );
 }

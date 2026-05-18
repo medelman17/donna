@@ -1,18 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { EnrichStream } from "./enrich-stream";
+import { useEnrich } from "./detail-with-enrich";
 
-export function EnrichButton({ login }: { login: string }) {
-  const [streaming, setStreaming] = useState(false);
-
-  if (streaming) {
-    return <EnrichStream login={login} onDone={() => setStreaming(false)} />;
-  }
-
+export function EnrichButton() {
+  const enrich = useEnrich();
+  if (!enrich) return null;
   return (
-    <button className="filter-btn" onClick={() => setStreaming(true)}>
-      <span className="val">▸ Enrich with agent</span>
+    <button className="enrich-fab" onClick={enrich}>
+      ▶ Enrich
     </button>
   );
 }

@@ -13,6 +13,7 @@ import { CrmPanel } from "@/components/crm-panel";
 import { DetailWithEnrich } from "@/components/detail-with-enrich";
 import { DetailNav } from "@/components/detail-nav";
 import { EnrichmentHistory } from "@/components/enrichment-history";
+import { EnrichButton } from "@/components/enrich-button";
 import { MapPin, Building2, ExternalLink, Globe, AtSign, Link2, Mail } from "lucide-react";
 
 type Props = { params: Promise<{ login: string }> };
@@ -71,6 +72,7 @@ export default async function CandidatePage({ params }: Props) {
                     <h1>{candidate.name || login}</h1>
                     <span className="login">@{login}</span>
                     <StatusPill status={crm?.status ?? "new"} />
+                    <EnrichButton />
                   </div>
                   {candidate.bio && <p className="h-bio">{candidate.bio}</p>}
                   <div className="h-row">
