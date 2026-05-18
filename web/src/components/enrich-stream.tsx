@@ -22,7 +22,8 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
   const [status, setStatus] = useState<"connecting" | "streaming" | "done">("connecting");
   const [elapsed, setElapsed] = useState(0);
   const [thinking, setThinking] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLElement | null>(null);
   const startRef = useRef(Date.now());
   const blocksRef = useRef<ContentBlock[]>([]);
   const lastTextRef = useRef(Date.now());
@@ -152,6 +153,10 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
     };
   }, [login]);
 
+  useEffect(() => {
+    scrollRef.current = contentRef.current?.closest(".detail-main") as HTMLElement | null;
+  }, []);
+
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [hasNewBelow, setHasNewBelow] = useState(false);
 
@@ -233,7 +238,7 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
         )}
       </div>
 
-      <div ref={scrollRef} style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}>
+      <div ref={contentRef}>
         {blocks.length === 0 && status === "connecting" && (
           <div style={{ color: "var(--color-fg-subtle)", fontSize: 13, padding: 20, textAlign: "center" }}>
             Starting enrichment agent...
