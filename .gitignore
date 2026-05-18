@@ -22,3 +22,5 @@ mise.local.toml
 # OS
 .DS_Store
 .playwright-mcp/
+design_handoff_*/
+docs/
