@@ -652,6 +652,120 @@ body {
 .reseed-btn:hover { background: var(--color-bg-2); color: var(--color-fg); }
 .reseed-spin { display: inline-block; animation: spin 0.8s linear infinite; }
 
+/* Onboarding */
+.onboarding {
+  display: flex; align-items: center; justify-content: center;
+  min-height: calc(100vh - 50px); padding: 40px 20px;
+}
+.onboarding-card {
+  text-align: center; max-width: 400px; width: 100%;
+}
+.onboarding-logo {
+  display: flex; justify-content: center; margin-bottom: 16px;
+}
+.onboarding-title {
+  font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 4px;
+}
+.onboarding-tagline {
+  color: var(--color-fg-subtle); font-size: 14px; margin: 0 0 32px;
+}
+.onboarding-steps {
+  text-align: left; display: flex; flex-direction: column; gap: 0;
+  border: 1px solid var(--color-border); border-radius: 10px;
+  overflow: hidden; background: var(--color-panel);
+}
+.onboarding-step {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px; border-bottom: 1px solid var(--color-border);
+  color: var(--color-fg-subtle); font-size: 13px;
+  transition: color 0.2s;
+}
+.onboarding-step:last-child { border-bottom: none; }
+.onboarding-step[data-active] { color: var(--color-fg); }
+.onboarding-step[data-done] { color: var(--color-fg-muted); }
+.step-indicator {
+  width: 20px; height: 20px; display: grid; place-items: center;
+  font-size: 12px; flex-shrink: 0;
+}
+.onboarding-step[data-done] .step-indicator { color: #16a34a; font-weight: 700; }
+.step-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--color-border);
+}
+.step-label { font-weight: 600; white-space: nowrap; }
+.step-detail {
+  color: var(--color-fg-subtle); font-weight: 400;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.onboarding-quote {
+  color: var(--color-fg-subtle); font-style: italic; font-size: 13px;
+  margin: 24px 0 0;
+}
+.onboarding-error {
+  margin-top: 20px; padding: 12px 16px;
+  border: 1px solid color-mix(in oklab, #ef4444, transparent 70%);
+  border-radius: 8px; background: color-mix(in oklab, #ef4444, transparent 94%);
+  font-size: 13px; color: var(--color-fg-muted);
+}
+.onboarding-error code {
+  font-family: var(--font-geist-mono); font-size: 12px;
+  padding: 1px 4px; background: var(--color-bg-2); border-radius: 3px;
+}
+.onboarding-retry {
+  margin-top: 10px; padding: 6px 16px; border-radius: 6px;
+  border: 1px solid var(--color-border); background: var(--color-panel);
+  font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  color: var(--color-fg);
+}
+.onboarding-retry:hover { background: var(--color-bg-2); }
+
+/* Onboarding setup form */
+.onboarding-setup {
+  text-align: left; display: flex; flex-direction: column; gap: 20px;
+  margin-top: 8px;
+}
+.setup-section {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.setup-label {
+  font-size: 13px; font-weight: 600; color: var(--color-fg);
+}
+.setup-input, .setup-textarea {
+  font: inherit; font-size: 13px; padding: 8px 10px;
+  border: 1px solid var(--color-border); border-radius: 7px;
+  background: var(--color-panel); color: var(--color-fg);
+  outline: none; resize: vertical;
+}
+.setup-input:focus, .setup-textarea:focus {
+  border-color: color-mix(in oklab, var(--color-accent), transparent 40%);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent), transparent 88%);
+}
+.setup-input::placeholder, .setup-textarea::placeholder {
+  color: var(--color-fg-subtle);
+}
+.setup-hint {
+  font-size: 11.5px; color: var(--color-fg-subtle);
+}
+.setup-actions {
+  display: flex; align-items: center; gap: 12px; margin-top: 4px;
+}
+.setup-start {
+  flex: 1; padding: 9px 16px; border-radius: 8px; border: none;
+  background: linear-gradient(135deg, var(--color-accent) 0%, color-mix(in oklab, var(--color-accent), black 18%) 100%);
+  color: #fff; font: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.setup-start:hover { opacity: 0.9; }
+.setup-start:disabled { opacity: 0.6; cursor: default; }
+.setup-skip {
+  padding: 9px 16px; border-radius: 8px;
+  border: 1px solid var(--color-border); background: transparent;
+  color: var(--color-fg-muted); font: inherit; font-size: 13px;
+  cursor: pointer;
+}
+.setup-skip:hover { background: var(--color-bg-2); color: var(--color-fg); }
+.setup-skip:disabled { opacity: 0.5; cursor: default; }
+
 /* Bulk action bar */
 .bulk-bar {
   position: sticky; bottom: 0; z-index: 10;

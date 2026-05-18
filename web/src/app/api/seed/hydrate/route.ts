@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 const execFileAsync = promisify(execFile);
 
-const BATCH_SIZE = 50;
+const BATCH_SIZE = 5;
 
 const USER_FIELDS = `
   name bio location company
@@ -15,7 +15,7 @@ const USER_FIELDS = `
   createdAt isHireable twitterUsername websiteUrl
 `;
 
-export async function POST() {
+export async function POST(request: Request) {
   const unhydrated = await prisma.candidate.findMany({
     where: {
       OR: [
@@ -68,11 +68,10 @@ export async function POST() {
             githubCreatedAt: u.createdAt ? new Date(u.createdAt) : undefined,
           },
         });
-
         hydrated++;
       }
     } catch (e: any) {
-      console.error(`[hydrate] Batch ${i}-${i + BATCH_SIZE} failed:`, e.message);
+      console.error(`[hydrate] Batch ${i}-${i + BATCH_SIZE} failed:`, e.message?.slice(0, 200));
     }
   }
 
