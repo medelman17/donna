@@ -765,6 +765,43 @@ body {
 }
 .setup-skip:hover { background: var(--color-bg-2); color: var(--color-fg); }
 .setup-skip:disabled { opacity: 0.5; cursor: default; }
+.setup-section-header {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.setup-add {
+  font: inherit; font-size: 12px; font-weight: 500; color: var(--color-accent);
+  border: 1px solid var(--color-border); border-radius: 6px;
+  background: transparent; padding: 3px 10px; cursor: pointer;
+}
+.setup-add:hover { background: var(--color-bg-2); }
+.setup-card {
+  border: 1px solid var(--color-border); border-radius: 8px;
+  background: var(--color-panel); padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.setup-card-header {
+  display: flex; align-items: center; gap: 6px;
+}
+.setup-remove {
+  font: inherit; font-size: 15px; color: var(--color-fg-subtle);
+  background: none; border: none; cursor: pointer; padding: 0 4px;
+  line-height: 1; flex-shrink: 0;
+}
+.setup-remove:hover { color: var(--color-fg); }
+.setup-pref-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border: 1px solid var(--color-border);
+  border-radius: 8px; background: var(--color-panel);
+}
+.setup-weight-dots {
+  display: flex; gap: 3px; flex-shrink: 0; padding: 2px 0;
+}
+.setup-dot {
+  width: 8px; height: 8px; border-radius: 50%; border: none;
+  background: var(--color-border); cursor: pointer; padding: 0;
+  transition: background 0.1s;
+}
+.setup-dot[data-active] { background: var(--color-accent); }
 
 /* Bulk action bar */
 .bulk-bar {

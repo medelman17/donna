@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 type Phase = "setup" | "seeding" | "hydrating" | "done" | "error";
+type DraftPosition = { title: string; description: string };
+type DraftPref = { tag: string; description: string; weight: number };
 
 const PIPELINE_STEPS = [
   { key: "seeding", label: "Discovering candidates" },
@@ -13,43 +15,53 @@ const PIPELINE_STEPS = [
 
 function SetupForm({ onComplete }: { onComplete: () => void }) {
   const [company, setCompany] = useState("");
-  const [roleTitle, setRoleTitle] = useState("");
-  const [roleDesc, setRoleDesc] = useState("");
-  const [prefs, setPrefs] = useState("");
+  const [positions, setPositions] = useState<DraftPosition[]>([{ title: "", description: "" }]);
+  const [prefs, setPrefs] = useState<DraftPref[]>([{ tag: "", description: "", weight: 2 }]);
   const [saving, setSaving] = useState(false);
+
+  const addPosition = () => setPositions((p) => [...p, { title: "", description: "" }]);
+  const removePosition = (i: number) => setPositions((p) => p.filter((_, j) => j !== i));
+  const updatePosition = (i: number, field: keyof DraftPosition, value: string) =>
+    setPositions((p) => p.map((pos, j) => (j === i ? { ...pos, [field]: value } : pos)));
+
+  const addPref = () => setPrefs((p) => [...p, { tag: "", description: "", weight: 2 }]);
+  const removePref = (i: number) => setPrefs((p) => p.filter((_, j) => j !== i));
+  const updatePref = (i: number, field: string, value: string | number) =>
+    setPrefs((p) => p.map((pr, j) => (j === i ? { ...pr, [field]: value } : pr)));
 
   const submit = useCallback(async () => {
     setSaving(true);
     try {
+      const headers = { "Content-Type": "application/json" };
+
       if (company.trim()) {
         await fetch("/api/settings", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          method: "PUT", headers,
           body: JSON.stringify({ key: "company_description", value: company.trim() }),
         });
       }
-      if (roleTitle.trim()) {
+
+      for (const pos of positions) {
+        if (!pos.title.trim()) continue;
         await fetch("/api/settings/positions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: roleTitle.trim(), description: roleDesc.trim() }),
+          method: "POST", headers,
+          body: JSON.stringify({ title: pos.title.trim(), description: pos.description.trim() }),
         });
       }
-      if (prefs.trim()) {
-        const tags = prefs.split(",").map((t) => t.trim()).filter(Boolean);
-        for (const tag of tags) {
-          await fetch("/api/settings/preferences", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tag, description: "", weight: 2 }),
-          });
-        }
+
+      for (const pref of prefs) {
+        if (!pref.tag.trim()) continue;
+        await fetch("/api/settings/preferences", {
+          method: "POST", headers,
+          body: JSON.stringify({ tag: pref.tag.trim(), description: pref.description.trim(), weight: pref.weight }),
+        });
       }
+
       onComplete();
     } catch {
       setSaving(false);
     }
-  }, [company, roleTitle, roleDesc, prefs, onComplete]);
+  }, [company, positions, prefs, onComplete]);
 
   return (
     <div className="onboarding-setup">
@@ -65,31 +77,73 @@ function SetupForm({ onComplete }: { onComplete: () => void }) {
       </div>
 
       <div className="setup-section">
-        <label className="setup-label">What role are you hiring for?</label>
-        <input
-          className="setup-input"
-          placeholder="e.g. Senior Full-Stack Engineer"
-          value={roleTitle}
-          onChange={(e) => setRoleTitle(e.target.value)}
-        />
-        <textarea
-          className="setup-textarea"
-          placeholder="Describe the role — what they'd work on, what skills matter..."
-          value={roleDesc}
-          onChange={(e) => setRoleDesc(e.target.value)}
-          rows={2}
-        />
+        <div className="setup-section-header">
+          <label className="setup-label">Open positions</label>
+          <button className="setup-add" onClick={addPosition}>+ Add</button>
+        </div>
+        {positions.map((pos, i) => (
+          <div key={i} className="setup-card">
+            <div className="setup-card-header">
+              <input
+                className="setup-input"
+                style={{ fontWeight: 600, flex: 1 }}
+                placeholder="Position title — e.g. Senior Full-Stack Engineer"
+                value={pos.title}
+                onChange={(e) => updatePosition(i, "title", e.target.value)}
+              />
+              {positions.length > 1 && (
+                <button className="setup-remove" onClick={() => removePosition(i)}>x</button>
+              )}
+            </div>
+            <textarea
+              className="setup-textarea"
+              placeholder="Requirements, tech stack, experience level, nice-to-haves..."
+              value={pos.description}
+              onChange={(e) => updatePosition(i, "description", e.target.value)}
+              rows={2}
+            />
+          </div>
+        ))}
       </div>
 
       <div className="setup-section">
-        <label className="setup-label">What are you looking for?</label>
-        <input
-          className="setup-input"
-          placeholder="e.g. AI experience, legal background, open source contributor"
-          value={prefs}
-          onChange={(e) => setPrefs(e.target.value)}
-        />
-        <span className="setup-hint">Comma-separated traits that matter to you</span>
+        <div className="setup-section-header">
+          <label className="setup-label">Hiring preferences</label>
+          <button className="setup-add" onClick={addPref}>+ Add</button>
+        </div>
+        <span className="setup-hint">What matters when evaluating candidates. Click dots to set priority.</span>
+        {prefs.map((pref, i) => (
+          <div key={i} className="setup-pref-row">
+            <div className="setup-weight-dots">
+              {[1, 2, 3].map((w) => (
+                <button
+                  key={w}
+                  className="setup-dot"
+                  data-active={pref.weight >= w || undefined}
+                  onClick={() => updatePref(i, "weight", w)}
+                  title={["Low", "Medium", "High"][w - 1] + " priority"}
+                />
+              ))}
+            </div>
+            <input
+              className="setup-input"
+              style={{ fontWeight: 600, width: 160, flexShrink: 0 }}
+              placeholder="e.g. AI experience"
+              value={pref.tag}
+              onChange={(e) => updatePref(i, "tag", e.target.value)}
+            />
+            <input
+              className="setup-input"
+              style={{ flex: 1, color: "var(--color-fg-muted)" }}
+              placeholder="What to look for..."
+              value={pref.description}
+              onChange={(e) => updatePref(i, "description", e.target.value)}
+            />
+            {prefs.length > 1 && (
+              <button className="setup-remove" onClick={() => removePref(i)}>x</button>
+            )}
+          </div>
+        ))}
       </div>
 
       <div className="setup-actions">
