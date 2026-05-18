@@ -862,9 +862,12 @@ body {
   .topbar .meta .stats { display: none; }
 
   /* List page */
-  .toolbar { padding: 6px 10px; gap: 4px; flex-wrap: wrap; }
-  .toolbar .search { width: 100%; }
+  .toolbar { padding: 8px 10px; gap: 6px; flex-wrap: wrap; }
+  .toolbar .search { width: 100%; order: -1; }
+  .toolbar .filter-btn, .toolbar .toggle-pill { display: none; }
   .toolbar .right { margin-left: auto; }
+
+  .meta-strip { display: none; }
 
   .row-head { display: none; }
   .row {
