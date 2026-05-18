@@ -1,5 +1,17 @@
 import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
+const geist = Geist({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-geist",
+});
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-geist-mono",
+});
 
 export const metadata: Metadata = {
   title: "Talent Scout",
@@ -8,15 +20,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-background text-foreground antialiased">
-        <header className="border-b">
-          <div className="mx-auto flex h-14 max-w-7xl items-center px-6">
-            <h1 className="text-lg font-semibold">Talent Scout</h1>
-          </div>
-        </header>
-        <main className="mx-auto max-w-7xl px-6 py-6">{children}</main>
-      </body>
+    <html lang="en" className={`${geist.variable} ${geistMono.variable}`}>
+      <body style={{ fontFamily: "var(--font-geist)" }}>{children}</body>
     </html>
   );
 }
