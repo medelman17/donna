@@ -851,8 +851,10 @@ body {
   /* Topbar */
   .topbar { padding: 0 10px; gap: 8px; font-size: 12px; }
   .topbar .logo span { display: none; }
+  .topbar .crumb { display: none; }
   .topbar .meta { gap: 8px; font-size: 11px; }
   .topbar .meta .live-pill { display: none; }
+  .topbar .meta .stats { display: none; }
 
   /* List page */
   .toolbar { padding: 6px 10px; gap: 4px; flex-wrap: wrap; }
