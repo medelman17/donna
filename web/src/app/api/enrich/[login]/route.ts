@@ -6,6 +6,18 @@ import { enrichmentTools, ENRICHMENT_SYSTEM_PROMPT } from "@/lib/tools";
 
 export const maxDuration = 300;
 
+export type StreamEvent =
+  | { type: "text"; text: string }
+  | { type: "tool-call"; toolName: string; args: string }
+  | { type: "tool-result"; toolName: string; result: string }
+  | { type: "done" };
+
+const encoder = new TextEncoder();
+
+function formatEvent(event: StreamEvent): Uint8Array {
+  return encoder.encode("data: " + JSON.stringify(event) + "\n\n");
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ login: string }> }
@@ -31,8 +43,8 @@ export async function POST(
           data: {
             candidateLogin: login,
             tool: tc.toolName,
-            input: tc.input as any,
-            output: { result: typeof tr?.output === "string" ? tr.output.slice(0, 2000) : "ok" },
+            input: (tc as any).input ?? {},
+            output: { result: typeof (tr as any)?.output === "string" ? (tr as any).output.slice(0, 2000) : "ok" },
             createdAt: new Date(),
           },
         }).catch(() => {});
@@ -40,7 +52,40 @@ export async function POST(
     },
   });
 
-  return result.toTextStreamResponse();
+  const transformStream = new TransformStream({
+    transform(chunk, controller) {
+      switch (chunk.type) {
+        case "text-delta":
+          controller.enqueue(formatEvent({ type: "text", text: chunk.textDelta }));
+          break;
+        case "tool-call":
+          controller.enqueue(formatEvent({
+            type: "tool-call",
+            toolName: chunk.toolName,
+            args: JSON.stringify(chunk.args).slice(0, 200),
+          }));
+          break;
+        case "tool-result":
+          controller.enqueue(formatEvent({
+            type: "tool-result",
+            toolName: chunk.toolName,
+            result: typeof chunk.result === "string" ? chunk.result.slice(0, 200) : JSON.stringify(chunk.result).slice(0, 200),
+          }));
+          break;
+        case "finish":
+          controller.enqueue(formatEvent({ type: "done" }));
+          break;
+      }
+    },
+  });
+
+  return new Response(result.fullStream.pipeThrough(transformStream), {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
 }
 
 export async function GET(

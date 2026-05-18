@@ -234,7 +234,7 @@ def enrich_candidate(login: str) -> dict[str, Any]:
                         "mcp__tools__technical_assess",
                         "mcp__tools__legal_relevance_assess",
                     ],
-                    max_turns=40,
+                    max_turns=25,
                 ),
             ):
                 if isinstance(message, AssistantMessage):

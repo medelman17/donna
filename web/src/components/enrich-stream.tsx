@@ -5,8 +5,14 @@ import { useRouter } from "next/navigation";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+type StreamEvent =
+  | { type: "text"; text: string }
+  | { type: "tool-call"; toolName: string; args: string }
+  | { type: "tool-result"; toolName: string; result: string }
+  | { type: "done" };
+
 export function EnrichStream({ login, onDone }: { login: string; onDone: () => void }) {
-  const [chunks, setChunks] = useState<string[]>([]);
+  const [textChunks, setTextChunks] = useState<string[]>([]);
   const [toolCalls, setToolCalls] = useState<{ name: string; args: string }[]>([]);
   const [status, setStatus] = useState<"connecting" | "streaming" | "done">("connecting");
   const [elapsed, setElapsed] = useState(0);
@@ -23,6 +29,7 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     const controller = new AbortController();
     abortRef.current = controller;
 
@@ -33,7 +40,9 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
           signal: controller.signal,
         });
 
+        if (cancelled) return;
         setStatus("streaming");
+
         const reader = response.body?.getReader();
         if (!reader) return;
 
@@ -45,72 +54,64 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
-
           const lines = buffer.split("\n");
           buffer = lines.pop() || "";
 
           for (const line of lines) {
-            if (!line.trim()) continue;
+            const trimmed = line.trim();
+            if (!trimmed || !trimmed.startsWith("data: ")) continue;
 
-            // AI SDK text stream protocol:
-            // 0: = text delta (JSON-encoded string)
-            // 9: = tool call
-            // e: = finish
-            // d: = done
-            if (line.startsWith("0:")) {
-              try {
-                const text = JSON.parse(line.slice(2));
-                if (text) setChunks(prev => [...prev, text]);
-              } catch {}
-            } else if (line.startsWith("9:")) {
-              try {
-                const data = JSON.parse(line.slice(2));
-                if (data?.toolName) {
-                  setToolCalls(prev => [...prev, {
-                    name: data.toolName,
-                    args: JSON.stringify(data.args || {}).slice(0, 100),
-                  }]);
-                }
-              } catch {}
-            } else if (line.startsWith("e:")) {
-              setStatus("done");
-            } else if (line.startsWith("d:")) {
-              setStatus("done");
-            }
+            try {
+              const event: StreamEvent = JSON.parse(trimmed.slice(6));
+
+              switch (event.type) {
+                case "text":
+                  setTextChunks(prev => [...prev, event.text]);
+                  break;
+                case "tool-call":
+                  setToolCalls(prev => [...prev, { name: event.toolName, args: event.args }]);
+                  break;
+                case "tool-result":
+                  // Tool results handled silently — the text stream has the reasoning
+                  break;
+                case "done":
+                  setStatus("done");
+                  setTimeout(() => {
+                    router.refresh();
+                    onDone();
+                  }, 2000);
+                  break;
+              }
+            } catch {}
           }
         }
 
-        setStatus("done");
+        if (status !== "done") setStatus("done");
       } catch (e: any) {
         if (e.name !== "AbortError") {
-          setChunks(prev => [...prev, `\n\n**Error:** ${e.message}`]);
+          setTextChunks(prev => [...prev, `\n\n**Error:** ${e.message}`]);
         }
         setStatus("done");
       }
-
-      setTimeout(() => {
-        router.refresh();
-        onDone();
-      }, 2000);
     };
 
     run();
-    return () => controller.abort();
+    return () => { cancelled = true; };
   }, [login]);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [chunks, toolCalls]);
+  }, [textChunks, toolCalls]);
 
   const abort = () => {
     abortRef.current?.abort();
     setStatus("done");
-    setChunks(prev => [...prev, "\n\n*Aborted by user.*"]);
+    setTextChunks(prev => [...prev, "\n\n*Aborted by user.*"]);
   };
 
-  const fullText = chunks.join("");
+  const fullText = textChunks.join("");
 
   return (
     <div className="dx" style={{ padding: "16px 28px" }}>
@@ -147,7 +148,7 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
         )}
       </div>
 
-      {/* Content: agent reasoning as markdown + tool calls inline */}
+      {/* Content */}
       <div ref={scrollRef} style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}>
         {/* Tool call log */}
         {toolCalls.length > 0 && (
@@ -160,13 +161,13 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
               }}>
                 <span style={{ color: "#16a34a" }}>✓</span>
                 <span style={{ fontWeight: 500 }}>{tc.name}</span>
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tc.args}</span>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{tc.args}</span>
               </div>
             ))}
           </div>
         )}
 
-        {/* Agent reasoning as markdown */}
+        {/* Agent reasoning as streaming markdown */}
         {fullText && (
           <div style={{
             border: "1px solid var(--color-border)", borderRadius: "var(--radius-DEFAULT)",

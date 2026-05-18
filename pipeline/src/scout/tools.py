@@ -328,15 +328,11 @@ async def linkedin_lookup(args: dict[str, Any]) -> dict[str, Any]:
 
 ASSESSOR_PROMPT = """You are a senior engineering technical assessor. You will be given a GitHub developer's login and a list of their most interesting repositories.
 
-Your job is to READ ACTUAL CODE from these repos and assess the developer's technical ability. Use the gh_query tool to:
+Your job is to READ ACTUAL CODE from these repos and assess the developer's technical ability. Be FAST and FOCUSED — you have limited turns.
 
-1. Get the file tree: gh_query endpoint="/repos/{owner}/{repo}/git/trees/HEAD?recursive=1" jq_filter=".tree[].path"
-2. Read key source files (NOT test files first — read the actual implementation):
-   - Look for: main entry points, core modules, API routes, data models, algorithms
-   - gh_query endpoint="/repos/{owner}/{repo}/contents/{path}" jq_filter=".content"
-   - The content is base64 encoded — describe what you can infer from the structure
-3. Check for tests: look for test directories, test files, CI config
-4. Check package.json/pyproject.toml/Cargo.toml for dependency choices
+1. Get the file tree of ONE repo (the most interesting): gh_query endpoint="/repos/{owner}/{repo}/git/trees/HEAD?recursive=1" jq_filter=".tree[].path"
+2. Read 2-3 key source files — entry points or core modules only
+3. Check package.json/pyproject.toml for dependency choices
 5. Look at recent commits for commit message quality: gh_query endpoint="/repos/{owner}/{repo}/commits?per_page=10"
 
 ASSESS:
@@ -403,7 +399,7 @@ async def technical_assess(args: dict[str, Any]) -> dict[str, Any]:
                 system_prompt=ASSESSOR_PROMPT,
                 mcp_servers={"gh": assessor_server},
                 allowed_tools=["mcp__gh__gh_query"],
-                max_turns=20,
+                max_turns=8,
             ),
         ):
             if isinstance(message, AssistantMessage):
@@ -460,12 +456,7 @@ INVESTIGATE their connection to legal/legal-tech from multiple angles:
    - Government/civic tech → court systems, public records
    - Data pipelines → legal data processing, e-discovery
 
-4. **The fork itself**: Why might they have forked willchen96/mike (an AI legal platform)?
-   - Did they modify it? (Check their fork's commits if available)
-   - Is it related to their other work?
-   - Did they just star/fork everything trending that day?
-
-5. **Web presence**: Search for "{name} legal tech", "{name} law technology", "{name} compliance". Check if they've written about, spoken about, or worked in legal tech.
+4. **Web presence**: Do 1-2 targeted searches: "{name} legal tech" or "{company} legal". Don't do more than 2 searches — be efficient.
 
 RATE their legal-tech relevance on a scale:
 - **Deep**: Works directly in legal tech (legal SaaS, law firm tech, court systems)
@@ -522,7 +513,7 @@ async def legal_relevance_assess(args: dict[str, Any]) -> dict[str, Any]:
                 system_prompt=LEGAL_ASSESSOR_PROMPT,
                 mcp_servers={"tools": assessor_server},
                 allowed_tools=["mcp__tools__gh_query", "mcp__tools__web_search"],
-                max_turns=15,
+                max_turns=8,
             ),
         ):
             if isinstance(message, AssistantMessage):
