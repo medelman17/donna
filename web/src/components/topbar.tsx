@@ -33,7 +33,7 @@ export async function Topbar({ candidateLogin }: Props) {
           <span className="live-dot" />
           Pipeline ready
         </span>
-        <span className="stats">{candidates} forkers · {enriched} enriched · {analyzed} analyzed</span>
+        <span className="stats">{candidates} candidates · {enriched} enriched · {analyzed} analyzed</span>
       </div>
     </div>
   );
