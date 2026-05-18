@@ -10,15 +10,35 @@ type ContentBlock =
   | { type: "text"; text: string }
   | { type: "card"; card: string; props: Record<string, unknown> };
 
-function tryParseCard(line: string): { card: string; props: Record<string, unknown> } | null {
+function tryParseCard(line: string): { card: string; props: Record<string, unknown>; remainder: string } | null {
   const trimmed = line.trim();
   if (!trimmed.startsWith('{"card"')) return null;
   try {
     const parsed = JSON.parse(trimmed);
     if (parsed.card && typeof parsed.card === "string") {
-      return { card: parsed.card, props: parsed.props ?? {} };
+      return { card: parsed.card, props: parsed.props ?? {}, remainder: "" };
     }
-  } catch {}
+  } catch {
+    // Model may have appended text after the JSON — find where the JSON object ends
+    let depth = 0;
+    for (let i = 0; i < trimmed.length; i++) {
+      if (trimmed[i] === "{") depth++;
+      else if (trimmed[i] === "}") {
+        depth--;
+        if (depth === 0) {
+          const jsonPart = trimmed.slice(0, i + 1);
+          const rest = trimmed.slice(i + 1).trim();
+          try {
+            const parsed = JSON.parse(jsonPart);
+            if (parsed.card && typeof parsed.card === "string") {
+              return { card: parsed.card, props: parsed.props ?? {}, remainder: rest };
+            }
+          } catch {}
+          break;
+        }
+      }
+    }
+  }
   return null;
 }
 
@@ -101,6 +121,9 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
             if (card) {
               pushBlock({ type: "card", card: card.card, props: card.props });
               hasCard = true;
+              if (card.remainder) {
+                pushBlock({ type: "text", text: card.remainder + "\n" });
+              }
             } else {
               pushBlock({ type: "text", text: line + "\n" });
             }
@@ -121,6 +144,7 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
           const card = tryParseCard(buffer);
           if (card) {
             pushBlock({ type: "card", card: card.card, props: card.props });
+            if (card.remainder) pushBlock({ type: "text", text: card.remainder });
           } else {
             pushBlock({ type: "text", text: buffer });
           }
