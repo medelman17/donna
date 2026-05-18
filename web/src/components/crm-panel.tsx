@@ -119,6 +119,7 @@ export function CrmPanel({
           {/* Status + Tags */}
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <label style={{ fontSize: 10.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--color-fg-subtle)", width: 48, flexShrink: 0 }}>Status</label>
               <select value={status} onChange={e => handleStatus(e.target.value)}
                 style={{ fontSize: 12, padding: "4px 8px", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border)", background: "var(--color-bg-2)", color: "var(--color-fg)", flex: 1 }}>
                 {["new", "reviewing", "interested", "contacted", "passed", "hired"].map(s => (
@@ -127,10 +128,13 @@ export function CrmPanel({
               </select>
               {savingEl}
             </div>
-            <input type="text" placeholder="Tags: q2-batch, warm-intro" value={tagInput} onChange={e => handleTags(e.target.value)}
-              style={{ width: "100%", fontSize: 12, padding: "5px 8px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-bg-2)", color: "var(--color-fg)", fontFamily: "inherit" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <label style={{ fontSize: 10.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--color-fg-subtle)", width: 48, flexShrink: 0 }}>Tags</label>
+              <input type="text" placeholder="q2-batch, warm-intro" value={tagInput} onChange={e => handleTags(e.target.value)}
+                style={{ width: "100%", fontSize: 12, padding: "5px 8px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-bg-2)", color: "var(--color-fg)", fontFamily: "inherit", flex: 1 }} />
+            </div>
             {savedTags.length > 0 && (
-              <div className="tags-cloud" style={{ marginTop: 4 }}>
+              <div className="tags-cloud" style={{ marginTop: 4, marginLeft: 56 }}>
                 {savedTags.map(t => <span key={t} className="tag">{t}</span>)}
               </div>
             )}

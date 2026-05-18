@@ -19,7 +19,7 @@ export async function Topbar({ candidateLogin }: Props) {
         <span>Talent Scout</span>
       </div>
       <span className="crumb">
-        / <Link href="/">willchen96/mike</Link>
+        / <Link href="/">Candidates</Link>
         {candidateLogin && (
           <> / <span style={{ color: "var(--color-fg-muted)" }}>@{candidateLogin}</span></>
         )}
