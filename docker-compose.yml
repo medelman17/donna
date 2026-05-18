@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg18
+    ports: ["54320:5432"]
+    environment:
+      POSTGRES_DB: scout
+      POSTGRES_USER: scout
+      POSTGRES_PASSWORD: scout_dev
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scout"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:8-alpine
+    ports: ["63790:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:

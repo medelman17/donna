@@ -1,0 +1,70 @@
+[tools]
+python = "3.12"
+node = "24"
+uv = "latest"
+
+[tasks.up]
+description = "Start Postgres + Redis"
+run = "docker compose up -d && echo 'Waiting for healthy...' && sleep 3 && docker compose ps"
+
+[tasks.down]
+description = "Stop containers"
+run = "docker compose down"
+
+[tasks.db-reset]
+description = "Reset database"
+dir = "web"
+run = "npx prisma migrate reset --force"
+
+[tasks.fetch-forks]
+description = "Fetch all forks of willchen96/mike"
+dir = "pipeline"
+run = "uv run scout fetch-forks"
+
+[tasks.enrich]
+description = "Agent-driven enrichment (GitHub + web + LinkedIn)"
+dir = "pipeline"
+raw = true
+run = "uv run scout enrich $@"
+
+[tasks.analyze]
+description = "Claude Opus 4.7 analysis"
+dir = "pipeline"
+raw = true
+run = "uv run scout analyze $@"
+
+[tasks.run]
+description = "Full pipeline: fetch → enrich → analyze"
+dir = "pipeline"
+run = "uv run scout run"
+
+[tasks.deep-dive]
+description = "Re-enrich one candidate"
+dir = "pipeline"
+raw = true
+run = "uv run scout deep-dive $@"
+
+[tasks.stats]
+description = "Print pipeline statistics"
+dir = "pipeline"
+run = "uv run scout stats"
+
+[tasks.dev]
+description = "Start Next.js dev server"
+dir = "web"
+run = "npm run dev"
+
+[tasks.build]
+description = "Build Next.js app"
+dir = "web"
+run = "npm run build"
+
+[tasks.db-migrate]
+description = "Run Prisma migrations"
+dir = "web"
+run = "npx prisma migrate dev"
+
+[tasks.db-studio]
+description = "Open Prisma Studio"
+dir = "web"
+run = "npx prisma studio"
