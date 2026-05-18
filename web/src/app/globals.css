@@ -59,7 +59,7 @@ body {
   color: inherit;
   letter-spacing: -0.005em;
 }
-.topbar .logo-mark {
+.logo-mark {
   width: 18px; height: 18px; border-radius: 5px;
   background: linear-gradient(135deg, var(--color-accent) 0%, color-mix(in oklab, var(--color-accent), black 22%) 100%);
   display: grid; place-items: center;

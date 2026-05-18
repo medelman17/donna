@@ -198,7 +198,7 @@ export function SeedingState() {
     <div className="onboarding">
       <div className="onboarding-card">
         <div className="onboarding-logo">
-          <div className="logo-mark" style={{ width: 36, height: 36, fontSize: 20, borderRadius: 10 }}>D</div>
+          <div className="logo-mark" style={{ width: 64, height: 64, fontSize: 36, borderRadius: 16 }}>D</div>
         </div>
         <h1 className="onboarding-title">Donna</h1>
         <p className="onboarding-tagline">Agentic legal tech talent discovery</p>
