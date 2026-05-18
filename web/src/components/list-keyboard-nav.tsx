@@ -53,17 +53,18 @@ export function ListKeyboardNav({
     else if (er.bottom > pr.bottom - 8) scrollRef.current.scrollTop += (er.bottom - pr.bottom + 8);
   }, [activeIdx]);
 
-  const cols = "minmax(220px, 1.4fr) 90px minmax(280px, 2.4fr) minmax(140px, 1.1fr) 168px 70px 70px 90px 110px";
+  const cols = "minmax(180px, 1.4fr) 44px 56px minmax(180px, 2.4fr) minmax(100px, 0.8fr) 120px 60px 52px 56px 80px";
 
   return (
     <div style={{ "--cols": cols, display: "contents" } as React.CSSProperties}>
       <div className="row-head">
         <div>Candidate</div>
         <div>Fit</div>
+        <div>Level</div>
         <div>Summary</div>
         <div>Location</div>
         <div>Languages</div>
-        <div style={{ textAlign: "right" }}>Followers</div>
+        <div style={{ textAlign: "right" }}>Flwrs</div>
         <div style={{ textAlign: "right" }}>Repos</div>
         <div>Fork</div>
         <div>Status</div>

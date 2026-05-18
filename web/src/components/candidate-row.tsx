@@ -33,16 +33,19 @@ export function CandidateRow({
       <div className="fit-cell">
         {fitScore != null ? <FitChip score={fitScore} /> : <span className="dim">—</span>}
       </div>
+      <div className="stat">
+        {seniority && seniority !== "unknown" ? (
+          <span style={{
+            fontSize: 10, fontWeight: 600, padding: "1px 5px",
+            borderRadius: 3, background: "var(--color-bg-2)",
+            color: "var(--color-fg-muted)", textTransform: "capitalize",
+            whiteSpace: "nowrap",
+          }}>{seniority}</span>
+        ) : <span className="dim">—</span>}
+      </div>
       <div className="summary" title={summary ?? undefined}>{summary || <span className="dim">—</span>}</div>
       <div className="loc">{location || <span className="dim">—</span>}</div>
       <div className="langs">
-        {seniority && seniority !== "unknown" && (
-          <span style={{
-            fontSize: 10.5, fontWeight: 600, padding: "1px 5px",
-            borderRadius: 3, background: "var(--color-bg-2)",
-            color: "var(--color-fg-muted)", textTransform: "capitalize",
-          }}>{seniority}</span>
-        )}
         {topLanguages.slice(0, 2).map(l => <LangBadge key={l} name={l} />)}
       </div>
       <div className="nums">{fmtNum(followers)}</div>
