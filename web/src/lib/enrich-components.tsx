@@ -132,6 +132,36 @@ export const enrichComponents: Record<string, ComponentFn> = {
     );
   },
 
+  TriageCard: ({ props }: { props: { signals: { dimension: string; score: number; max: number; detail: string }[]; totalScore: number; maxScore: number; verdict: string } }) => {
+    const verdictCfg: Record<string, { bg: string; fg: string; label: string }> = {
+      SKIP: { bg: "#eceff3", fg: "#5c6473", label: "Skip — insufficient signal" },
+      LIGHT: { bg: "#fbecd6", fg: "#8a6a1f", label: "Light investigation" },
+      INVESTIGATE: { bg: "#c7ecd2", fg: "#0f6b32", label: "Full investigation" },
+    };
+    const vc = verdictCfg[props.verdict] ?? verdictCfg.SKIP;
+    return (
+      <div style={{ border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", background: "var(--color-bg-2)", borderBottom: "1px solid var(--color-border)" }}>
+          <span style={{ fontSize: 10.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--color-fg-subtle)" }}>Triage</span>
+          <span style={{ padding: "2px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600, background: vc.bg, color: vc.fg }}>{vc.label}</span>
+        </div>
+        <div style={{ padding: "10px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
+          {props.signals.map((s, i) => (
+            <div key={i} style={{ display: "grid", gridTemplateColumns: "110px 80px 1fr", gap: 8, alignItems: "center", fontSize: 12 }}>
+              <span style={{ color: "var(--color-fg-muted)", fontWeight: 500 }}>{s.dimension}</span>
+              <div style={{ display: "flex", gap: 2 }}>
+                {Array.from({ length: s.max }, (_, j) => (
+                  <div key={j} style={{ width: 12, height: 5, borderRadius: 2, background: j < s.score ? "var(--color-accent)" : "var(--color-border)" }} />
+                ))}
+              </div>
+              <span style={{ color: "var(--color-fg-subtle)", fontSize: 11 }}>{s.detail}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  },
+
   Divider: ({ props }: { props: { label?: string } }) => (
     <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", borderBottom: "1px solid var(--color-border)", paddingBottom: 6, marginTop: 8 }}>
       {props.label ? (

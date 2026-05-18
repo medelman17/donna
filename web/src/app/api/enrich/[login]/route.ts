@@ -71,6 +71,24 @@ export async function POST(
         if (data.twitter_username) metrics.push({ label: "Twitter", value: `@${data.twitter_username}` });
         if (metrics.length) cards.push({ card: "MetricGrid", props: { metrics } });
 
+        // Triage scoring
+        const profileDepth = [data.name, data.bio, data.blog, data.twitter_username, data.company].filter(Boolean).length;
+        const repoCount = data.public_repos ?? 0;
+        const followers = data.followers ?? 0;
+        const accountAge = data.created_at ? Math.max(0, new Date().getFullYear() - new Date(data.created_at).getFullYear()) : 0;
+
+        const signals: { dimension: string; score: number; max: number; detail: string }[] = [
+          { dimension: "Profile Depth", score: profileDepth, max: 5, detail: [data.name && "name", data.bio && "bio", data.blog && "blog", data.twitter_username && "twitter", data.company && "company"].filter(Boolean).join(", ") || "empty" },
+          { dimension: "Repo Volume", score: Math.min(5, Math.floor(repoCount / 3)), max: 5, detail: `${repoCount} public repos` },
+          { dimension: "Social Signal", score: Math.min(5, followers < 2 ? 0 : followers < 10 ? 1 : followers < 50 ? 2 : followers < 200 ? 3 : followers < 1000 ? 4 : 5), max: 5, detail: `${followers} followers` },
+          { dimension: "Account Age", score: Math.min(5, accountAge), max: 5, detail: accountAge > 0 ? `~${accountAge} yrs` : "< 1 yr" },
+        ];
+
+        const totalScore = signals.reduce((s, d) => s + d.score, 0);
+        const verdict = totalScore < 4 ? "SKIP" : totalScore < 8 ? "LIGHT" : "INVESTIGATE";
+
+        cards.push({ card: "TriageCard", props: { signals, totalScore, maxScore: 20, verdict } });
+
         await prisma.candidate.update({
           where: { login },
           data: {
