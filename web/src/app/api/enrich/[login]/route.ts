@@ -136,6 +136,7 @@ export async function POST(
           where: { login },
           data: {
             name: data.name || undefined,
+            email: data.email || undefined,
             bio: data.bio || undefined,
             location: data.location || undefined,
             company: data.company || undefined,

@@ -8,6 +8,8 @@ type Props = {
   login: string; status: string; bookmarked: boolean; notes: string | null; tags: string | null;
   fitScore: number | null; recommendedOutreach: string | null;
   confidence: number | null; model: string | null;
+  email: string | null; name: string | null; bio: string | null;
+  blog: string | null; company: string | null; twitter: string | null;
   followers: number; publicRepos: number; githubCreatedAt: Date | null;
   hasOwnCommits: boolean; aheadBy: number; behindBy: number; forkPushedAt: Date | null;
   openToWork: string | null; aiExperience: string | null;
@@ -17,6 +19,7 @@ type Props = {
 export function CrmPanel({
   login, status: initStatus, bookmarked: initBookmarked, notes: initNotes, tags: initTags,
   fitScore, recommendedOutreach, confidence, model,
+  email, name, bio, blog, company, twitter,
   followers, publicRepos, githubCreatedAt,
   hasOwnCommits, aheadBy, behindBy, forkPushedAt,
   openToWork, aiExperience, legalTechRelevance, seniority,
@@ -167,6 +170,42 @@ export function CrmPanel({
           </div>
         )}
       </div>
+      {(followers > 0 || publicRepos > 0) && (() => {
+        const profileDepth = [name, bio, blog, twitter, company].filter(Boolean).length;
+        const repoScore = Math.min(5, Math.floor(publicRepos / 3));
+        const socialScore = Math.min(5, followers < 2 ? 0 : followers < 10 ? 1 : followers < 50 ? 2 : followers < 200 ? 3 : followers < 1000 ? 4 : 5);
+        const ageScore = acctAge != null ? Math.min(5, acctAge) : 0;
+        const total = profileDepth + repoScore + socialScore + ageScore;
+        const verdict = total < 4 ? "SKIP" : total < 8 ? "LIGHT" : "INVESTIGATE";
+        const vColor = { SKIP: "#8a8a96", LIGHT: "#8a6a1f", INVESTIGATE: "#0f6b32" }[verdict] ?? "#8a8a96";
+        const dims = [
+          { label: "Profile", score: profileDepth, max: 5 },
+          { label: "Repos", score: repoScore, max: 5 },
+          { label: "Social", score: socialScore, max: 5 },
+          { label: "Account", score: ageScore, max: 5 },
+        ];
+        return (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <h3>Triage</h3>
+              <span style={{ fontSize: 10.5, fontWeight: 600, padding: "1px 7px", borderRadius: 999, color: vColor, background: `color-mix(in oklab, ${vColor}, transparent 88%)` }}>{verdict}</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {dims.map(d => (
+                <div key={d.label} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11.5 }}>
+                  <span style={{ width: 48, color: "var(--color-fg-muted)", fontWeight: 500 }}>{d.label}</span>
+                  <div style={{ display: "flex", gap: 2, flex: 1 }}>
+                    {Array.from({ length: d.max }, (_, j) => (
+                      <div key={j} style={{ width: 14, height: 4, borderRadius: 1, background: j < d.score ? "var(--color-accent)" : "var(--color-border)" }} />
+                    ))}
+                  </div>
+                  <span style={{ color: "var(--color-fg-subtle)", fontSize: 10.5, fontVariantNumeric: "tabular-nums" }}>{d.score}/{d.max}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
       <div>
         <h3>Fork</h3>
         <div style={{ fontSize: 12.5, color: "var(--color-fg-muted)", lineHeight: 1.55 }}>

@@ -13,7 +13,7 @@ import { CrmPanel } from "@/components/crm-panel";
 import { DetailWithEnrich } from "@/components/detail-with-enrich";
 import { DetailNav } from "@/components/detail-nav";
 import { EnrichmentHistory } from "@/components/enrichment-history";
-import { MapPin, Building2, ExternalLink, Globe, AtSign, Link2 } from "lucide-react";
+import { MapPin, Building2, ExternalLink, Globe, AtSign, Link2, Mail } from "lucide-react";
 
 type Props = { params: Promise<{ login: string }> };
 
@@ -81,6 +81,7 @@ export default async function CandidatePage({ params }: Props) {
                       <ExternalLink size={14} /> github.com/{login}
                     </a>
                     {candidate.blog && <><span className="dotsep">·</span><a href={candidate.blog} target="_blank" rel="noopener noreferrer"><Globe size={14} /> {candidate.blog.replace("https://", "")}</a></>}
+                    {candidate.email && <><span className="dotsep">·</span><a href={`mailto:${candidate.email}`} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Mail size={14} /> {candidate.email}</a></>}
                     {candidate.twitter && <><span className="dotsep">·</span><span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><AtSign size={14} /> {candidate.twitter}</span></>}
                     {linkedIn?.profileUrl && <><span className="dotsep">·</span><a href={linkedIn.profileUrl} target="_blank" rel="noopener noreferrer"><Link2 size={14} /> LinkedIn</a></>}
                   </div>
@@ -178,6 +179,9 @@ export default async function CandidatePage({ params }: Props) {
               recommendedOutreach={profile?.recommendedOutreach ?? null}
               confidence={profile?.confidence ?? null}
               model={profile?.model ?? null}
+              email={candidate.email ?? null} name={candidate.name ?? null}
+              bio={candidate.bio ?? null} blog={candidate.blog ?? null}
+              company={candidate.company ?? null} twitter={candidate.twitter ?? null}
               followers={candidate.followers} publicRepos={candidate.publicRepos}
               githubCreatedAt={candidate.githubCreatedAt}
               hasOwnCommits={forkMeta?.hasOwnCommits ?? false}

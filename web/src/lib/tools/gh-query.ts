@@ -51,6 +51,7 @@ async function persistGhData(endpoint: string, data: any) {
       create: {
         login: data.login,
         name: data.name,
+        email: data.email || undefined,
         bio: data.bio,
         location: data.location,
         company: data.company,
@@ -64,6 +65,7 @@ async function persistGhData(endpoint: string, data: any) {
       },
       update: {
         name: data.name,
+        email: data.email || undefined,
         bio: data.bio,
         location: data.location,
         company: data.company,

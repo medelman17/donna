@@ -129,6 +129,9 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
               case "card":
                 pushBlock({ type: "card", card: evt.card, props: evt.props });
                 flushSync();
+                if (evt.card === "TriageCard") {
+                  router.refresh();
+                }
                 break;
 
               case "done":

@@ -61,23 +61,42 @@ export const enrichComponents: Record<string, ComponentFn> = {
   },
 
   RepoCard: ({ props }: { props: { name: string; language?: string; stars?: number; description?: string; url?: string } }) => (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 14, padding: "10px 12px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-DEFAULT)" }}>
-      <div>
+    <div style={{
+      padding: "10px 14px", border: "1px solid var(--color-border)",
+      borderRadius: "var(--radius-DEFAULT)", background: "var(--color-panel)",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: props.description ? 5 : 0 }}>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="var(--color-fg-subtle)" style={{ flexShrink: 0 }}>
+          <path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z" />
+        </svg>
         {props.url ? (
-          <a href={props.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--color-accent)", fontWeight: 500, fontSize: 13, textDecoration: "none" }}>{props.name}</a>
+          <a href={props.url} target="_blank" rel="noopener noreferrer"
+            style={{ color: "var(--color-accent)", fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
+            {props.name}
+          </a>
         ) : (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--color-accent)", fontWeight: 500, fontSize: 13 }}>{props.name}</span>
+          <span style={{ color: "var(--color-accent)", fontWeight: 600, fontSize: 13 }}>{props.name}</span>
         )}
-        {props.description && <div style={{ color: "var(--color-fg-muted)", fontSize: 12.5, marginTop: 3 }}>{props.description}</div>}
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, color: "var(--color-fg-subtle)", fontSize: 11.5, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+      {props.description && (
+        <div style={{
+          color: "var(--color-fg-muted)", fontSize: 12, lineHeight: 1.45,
+          marginBottom: 8, maxWidth: 520,
+          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, overflow: "hidden",
+        }}>
+          {props.description}
+        </div>
+      )}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, color: "var(--color-fg-subtle)", fontSize: 11.5 }}>
         {props.language && (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: langColor(props.language) }} />
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: langColor(props.language) }} />
             {props.language}
           </span>
         )}
-        {props.stars != null && props.stars > 0 && <span>★ {props.stars}</span>}
+        {props.stars != null && props.stars > 0 && (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>★ {props.stars}</span>
+        )}
       </div>
     </div>
   ),

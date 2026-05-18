@@ -10,6 +10,7 @@ datasource db {
 model Candidate {
   login           String    @id
   name            String?
+  email           String?
   bio             String?
   location        String?
   company         String?
