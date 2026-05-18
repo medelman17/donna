@@ -108,7 +108,7 @@ export function CrmPanel({
         <div style={{
           position: "absolute", bottom: -1, height: 2, borderRadius: 1,
           background: "var(--color-accent)",
-          left: indicator.left + 14, width: indicator.width,
+          left: indicator.left, width: indicator.width,
           transition: "left 0.2s cubic-bezier(0.4, 0, 0.2, 1), width 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
         }} />
       </div>
