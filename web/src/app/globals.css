@@ -802,3 +802,63 @@ body {
   0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
   40% { opacity: 1; transform: scale(1); }
 }
+
+/* ─── Responsive ──────────────────────────────────────────────────────── */
+
+/* Tablet: ≤1024px */
+@media (max-width: 1024px) {
+  .detail-grid { grid-template-columns: 1fr; }
+  .detail-aside { border-left: none; border-top: 1px solid var(--color-border); }
+  .dx { padding: 16px 18px; }
+  .repo-list { grid-template-columns: 1fr; }
+}
+
+/* Mobile: ≤640px */
+@media (max-width: 640px) {
+  /* Topbar */
+  .topbar { padding: 0 10px; gap: 8px; font-size: 12px; }
+  .topbar .logo span { display: none; }
+  .topbar .meta { gap: 8px; font-size: 11px; }
+  .topbar .meta .live-pill { display: none; }
+
+  /* List page */
+  .toolbar { padding: 6px 10px; gap: 4px; flex-wrap: wrap; }
+  .toolbar .search { width: 100%; }
+  .toolbar .right { margin-left: auto; }
+
+  .row-head { display: none; }
+  .row {
+    display: flex !important; flex-wrap: wrap; gap: 6px;
+    padding: 10px 12px !important; align-items: center;
+  }
+  .row > div { padding-right: 0 !important; overflow: visible !important; }
+  .row > div:first-child { display: grid; place-items: center; }
+  .row .who { flex: 1 1 auto; min-width: 140px; }
+  .row .summary { flex: 1 1 100%; order: 10; font-size: 12px; white-space: normal !important; }
+  .row .loc, .row .langs { display: none; }
+  .row .nums { font-size: 11px; }
+
+  .bulk-bar { padding: 8px 12px; font-size: 12px; }
+
+  /* Detail page */
+  .dx { padding: 14px 14px; }
+  .detail-header { flex-direction: column; gap: 12px; }
+  .detail-header .h-name { flex-wrap: wrap; gap: 6px; }
+  .detail-header .h-name h1 { font-size: 18px; }
+  .detail-header .h-row { gap: 8px; font-size: 11px; }
+
+  .candidate-summary { flex-direction: column; gap: 8px; padding: 12px; }
+
+  .assess { grid-template-columns: 1fr; gap: 12px; }
+  .assess .fit-lg { flex-direction: row; align-items: center; gap: 12px; }
+
+  .signal-grid { grid-template-columns: 1fr; }
+
+  .qstats { grid-template-columns: 1fr 1fr; }
+
+  /* Enrichment stream */
+  .enrich-prose { font-size: 13px; }
+
+  /* Settings */
+  .aside { padding: 12px; gap: 12px; }
+}
