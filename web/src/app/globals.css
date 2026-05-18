@@ -664,17 +664,6 @@ body {
   margin: 12px 0;
 }
 
-/* ─── Feed enter animation ─────────────────────────────────────────────── */
-.enrich-feed > * {
-  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
-}
-@starting-style {
-  .enrich-feed > * {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-}
-
 /* ─── Streaming cursor ─────────────────────────────────────────────────── */
 .enrich-cursor {
   display: inline-block;

@@ -95,6 +95,7 @@ export async function POST(
             name: r.name, language: r.language ?? null,
             stars: r.stargazers_count ?? 0,
             description: r.description ?? null,
+            url: r.html_url ?? null,
           }});
         }
 

@@ -63,7 +63,11 @@ export const enrichComponents: Record<string, ComponentFn> = {
   RepoCard: ({ props }: { props: { name: string; language?: string; stars?: number; description?: string; url?: string } }) => (
     <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 14, padding: "10px 12px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-DEFAULT)" }}>
       <div>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--color-accent)", fontWeight: 500, fontSize: 13 }}>{props.name}</span>
+        {props.url ? (
+          <a href={props.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--color-accent)", fontWeight: 500, fontSize: 13, textDecoration: "none" }}>{props.name}</a>
+        ) : (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--color-accent)", fontWeight: 500, fontSize: 13 }}>{props.name}</span>
+        )}
         {props.description && <div style={{ color: "var(--color-fg-muted)", fontSize: 12.5, marginTop: 3 }}>{props.description}</div>}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12, color: "var(--color-fg-subtle)", fontSize: 11.5, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
