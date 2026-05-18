@@ -853,6 +853,8 @@ body {
 
 /* Mobile: ≤640px */
 @media (max-width: 640px) {
+  html, body { overflow-x: hidden; max-width: 100vw; }
+
   /* Topbar */
   .topbar { padding: 0 10px; gap: 8px; font-size: 12px; }
   .topbar .logo span { font-size: 14px; }
@@ -862,8 +864,8 @@ body {
   .topbar .meta .stats { display: none; }
 
   /* List page */
-  .toolbar { padding: 8px 10px; gap: 6px; flex-wrap: wrap; overflow: hidden; }
-  .toolbar .search { width: 100%; order: -1; max-width: 100%; box-sizing: border-box; }
+  .toolbar { padding: 8px 10px; gap: 6px; flex-wrap: wrap; }
+  .toolbar .search { width: 100% !important; order: -1; }
   .toolbar .search input { width: 100%; min-width: 0; }
   .toolbar .filter-btn, .toolbar .toggle-pill { display: none; }
   .toolbar .right { margin-left: auto; }
