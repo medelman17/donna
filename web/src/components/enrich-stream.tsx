@@ -295,15 +295,20 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
                 }
                 return rendered;
               })()}
-              {thinking && status === "streaming" && (
-                <motion.div key="thinking" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4, transition: { duration: 0.15 } }}
-                  transition={{ duration: 0.2, ease: "easeOut" }} className="enrich-thinking">
-                  <span className="enrich-thinking-dots"><span /><span /><span /></span>
-                  <span>Researching...</span>
-                </motion.div>
-              )}
             </AnimatePresence>
+            {status === "streaming" && (
+              <div className="enrich-thinking" style={{
+                opacity: thinking ? 1 : 0,
+                maxHeight: thinking ? 40 : 0,
+                overflow: "hidden",
+                transition: "opacity 0.2s ease, max-height 0.2s ease",
+                marginTop: thinking ? undefined : 0,
+                padding: thinking ? undefined : 0,
+              }}>
+                <span className="enrich-thinking-dots"><span /><span /><span /></span>
+                <span>Researching...</span>
+              </div>
+            )}
           </div>
         </LazyMotion>
 
