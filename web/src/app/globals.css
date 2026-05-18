@@ -864,13 +864,7 @@ body {
   .topbar .meta .stats { display: none; }
 
   /* List page */
-  .toolbar { padding: 8px 10px; gap: 6px; flex-wrap: wrap; }
-  .toolbar .search { width: 100% !important; order: -1; }
-  .toolbar .search input { width: 100%; min-width: 0; }
-  .toolbar .filter-btn, .toolbar .toggle-pill { display: none; }
-  .toolbar .right { margin-left: auto; }
-
-  .metastrip { display: none !important; }
+  .toolbar { padding: 8px 10px; gap: 6px; }
 
   .row-head { display: none; }
   .list-scroll { display: flex; flex-direction: column; gap: 1px; background: var(--color-border); }

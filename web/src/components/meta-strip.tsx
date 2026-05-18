@@ -8,7 +8,7 @@ type Props = {
 
 export function MetaStrip({ filtered, total, avgFit, ownCommitsForks, byStatus }: Props) {
   return (
-    <div className="metastrip">
+    <div className="metastrip hidden sm:flex">
       <span><b>{filtered}</b> of <b>{total}</b> candidates</span>
       <span>Avg fit <b>{avgFit}</b></span>
       <span>Own-commits forks <b>{ownCommitsForks}</b></span>

@@ -115,27 +115,29 @@ export function FilterBar() {
 
   return (
     <div className="toolbar">
-      <div className="search">
+      <div className="search max-sm:!w-full max-sm:order-first">
         <span style={{ color: "var(--color-fg-subtle)" }}>⌕</span>
         <input ref={searchRef} type="text" placeholder="Search name, login, bio…"
           defaultValue={get("q", "")} onChange={e => setQ(e.target.value)} />
-        <kbd>/</kbd>
+        <kbd className="max-sm:hidden">/</kbd>
       </div>
-      <FilterPopover label="Status" value={get("status", "all")} options={STATUS_OPTS} onChange={v => set("status", v)} />
-      <FilterPopover label="Seniority" value={get("seniority", "all")} options={SENIORITY_OPTS} onChange={v => set("seniority", v)} />
-      <FilterPopover label="Fit" value={get("minFit", "0")} options={FIT_OPTS} onChange={v => set("minFit", v)} />
-      <FilterPopover label="Lang" value={get("language", "all")} options={LANG_OPTS} onChange={v => set("language", v)} />
-      <button className="toggle-pill" data-on={hasCommits || undefined}
-        onClick={() => set("hasCommits", hasCommits ? "" : "true")}>
-        <span className="check-box">{hasCommits && <span style={{ fontSize: 9 }}>✓</span>}</span>
-        Own commits
-      </button>
-      <button className="toggle-pill" data-on={get("bookmarked", "false") === "true" || undefined}
-        onClick={() => set("bookmarked", get("bookmarked", "false") === "true" ? "" : "true")}
-        style={get("bookmarked", "false") === "true" ? { borderColor: "color-mix(in oklab, #f59e0b, transparent 40%)", color: "#f59e0b" } : undefined}>
-        <span style={{ fontSize: 12 }}>{get("bookmarked", "false") === "true" ? "★" : "☆"}</span>
-        Saved
-      </button>
+      <div className="max-sm:hidden contents sm:contents">
+        <FilterPopover label="Status" value={get("status", "all")} options={STATUS_OPTS} onChange={v => set("status", v)} />
+        <FilterPopover label="Seniority" value={get("seniority", "all")} options={SENIORITY_OPTS} onChange={v => set("seniority", v)} />
+        <FilterPopover label="Fit" value={get("minFit", "0")} options={FIT_OPTS} onChange={v => set("minFit", v)} />
+        <FilterPopover label="Lang" value={get("language", "all")} options={LANG_OPTS} onChange={v => set("language", v)} />
+        <button className="toggle-pill" data-on={hasCommits || undefined}
+          onClick={() => set("hasCommits", hasCommits ? "" : "true")}>
+          <span className="check-box">{hasCommits && <span style={{ fontSize: 9 }}>✓</span>}</span>
+          Own commits
+        </button>
+        <button className="toggle-pill" data-on={get("bookmarked", "false") === "true" || undefined}
+          onClick={() => set("bookmarked", get("bookmarked", "false") === "true" ? "" : "true")}
+          style={get("bookmarked", "false") === "true" ? { borderColor: "color-mix(in oklab, #f59e0b, transparent 40%)", color: "#f59e0b" } : undefined}>
+          <span style={{ fontSize: 12 }}>{get("bookmarked", "false") === "true" ? "★" : "☆"}</span>
+          Saved
+        </button>
+      </div>
       <div className="right">
         <FilterPopover label="Sort" value={get("sort", "fit-desc")} options={SORT_OPTS}
           onChange={v => set("sort", v)} align="right" />
