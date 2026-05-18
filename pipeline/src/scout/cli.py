@@ -22,6 +22,13 @@ def fetch_forks():
 
 
 @app.command()
+def fetch_contributors():
+    """Fetch issue authors, PR authors, and contributors from willchen96/mike."""
+    count = pipeline.run_fetch_contributors()
+    console.print(f"[bold green]Done.[/bold green] {count} contributors ingested.")
+
+
+@app.command()
 def enrich(
     limit: Optional[int] = typer.Option(None, help="Max candidates to enrich"),
     force: bool = typer.Option(False, "--force", "-f", help="Re-enrich even if already enriched"),

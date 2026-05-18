@@ -38,6 +38,78 @@ def run_fetch_forks() -> int:
     return len(forks)
 
 
+def run_fetch_contributors() -> int:
+    conn = db.connect()
+    repo = FORK_REPO
+
+    seen: set[str] = set()
+    ingested = 0
+
+    console.print("[bold]Fetching issue authors...[/bold]")
+    issues = github.fetch_issues(repo)
+    for issue in issues:
+        if issue.get("pull_request"):
+            continue
+        user = issue.get("user", {})
+        login = user.get("login")
+        if not login or login in seen:
+            continue
+        seen.add(login)
+        db.upsert_candidate(conn, {
+            "login": login,
+            "avatar_url": user.get("avatar_url"),
+            "html_url": user.get("html_url"),
+        })
+        ingested += 1
+
+    console.print(f"[bold]Fetching PR authors...[/bold]")
+    pulls = github.fetch_pulls(repo)
+    for pr in pulls:
+        user = pr.get("user", {})
+        login = user.get("login")
+        if not login or login in seen:
+            continue
+        seen.add(login)
+        db.upsert_candidate(conn, {
+            "login": login,
+            "avatar_url": user.get("avatar_url"),
+            "html_url": user.get("html_url"),
+        })
+        ingested += 1
+
+    console.print(f"[bold]Fetching contributors...[/bold]")
+    contribs = github.fetch_contributors(repo)
+    for c in contribs:
+        login = c.get("login")
+        if not login or login in seen:
+            continue
+        seen.add(login)
+        db.upsert_candidate(conn, {
+            "login": login,
+            "avatar_url": c.get("avatar_url"),
+            "html_url": c.get("html_url"),
+        })
+        ingested += 1
+
+    console.print(f"[bold]Fetching stargazers...[/bold]")
+    stargazers = github.fetch_stargazers(repo)
+    for s in stargazers:
+        login = s.get("login")
+        if not login or login in seen:
+            continue
+        seen.add(login)
+        db.upsert_candidate(conn, {
+            "login": login,
+            "avatar_url": s.get("avatar_url"),
+            "html_url": s.get("html_url"),
+        })
+        ingested += 1
+
+    conn.commit()
+    conn.close()
+    return ingested
+
+
 def run_enrich(limit: int | None = None, force: bool = False) -> int:
     conn = db.connect()
     if force:
@@ -126,5 +198,6 @@ def run_analyze(limit: int | None = None) -> int:
 
 def run_full_pipeline() -> None:
     run_fetch_forks()
+    run_fetch_contributors()
     run_enrich()
     run_analyze()

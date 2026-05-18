@@ -21,6 +21,11 @@ description = "Fetch all forks of willchen96/mike"
 dir = "pipeline"
 run = "uv run scout fetch-forks"
 
+[tasks.fetch-contributors]
+description = "Fetch issue authors, PR authors, and contributors"
+dir = "pipeline"
+run = "uv run scout fetch-contributors"
+
 [tasks.enrich]
 description = "Agent-driven enrichment (GitHub + web + LinkedIn)"
 dir = "pipeline"

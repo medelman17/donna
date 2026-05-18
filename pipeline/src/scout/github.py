@@ -58,6 +58,28 @@ def fetch_user_events(login: str) -> list[dict]:
     return gh_api(f"users/{login}/events/public?per_page=30")
 
 
+def fetch_issues(repo: str, state: str = "all") -> list[dict]:
+    return gh_api(f"repos/{repo}/issues?state={state}&per_page=100", paginate=True)
+
+
+def fetch_pulls(repo: str, state: str = "all") -> list[dict]:
+    return gh_api(f"repos/{repo}/pulls?state={state}&per_page=100", paginate=True)
+
+
+def fetch_contributors(repo: str) -> list[dict]:
+    try:
+        return gh_api(f"repos/{repo}/contributors?per_page=100", paginate=True)
+    except RuntimeError:
+        return []
+
+
+def fetch_stargazers(repo: str) -> list[dict]:
+    try:
+        return gh_api(f"repos/{repo}/stargazers?per_page=100", paginate=True)
+    except RuntimeError:
+        return []
+
+
 def fetch_compare(owner: str, repo: str, base: str, head: str) -> dict | None:
     try:
         return gh_api(f"repos/{owner}/{repo}/compare/{base}...{head}", use_cache=True)
