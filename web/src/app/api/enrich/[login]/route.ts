@@ -1,8 +1,51 @@
-import { streamText, stepCountIs } from "ai";
+import { streamText, generateObject, stepCountIs } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
+import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { enrichmentTools, ENRICHMENT_SYSTEM_PROMPT } from "@/lib/tools";
+
+const analysisSchema = z.object({
+  summary: z.string().describe("2-3 sentence summary of the candidate's background and relevance"),
+  fitScore: z.number().int().min(1).max(5).describe("1=no fit, 2=poor, 3=moderate, 4=good, 5=excellent"),
+  fitReasoning: z.string().describe("Paragraph explaining the fit score with specific evidence"),
+  seniority: z.enum(["junior", "mid", "senior", "staff", "unknown"]),
+  recommendedOutreach: z.enum(["yes", "no", "maybe"]),
+  outreachReason: z.string().describe("One sentence explaining the outreach recommendation"),
+  confidence: z.number().min(0).max(1).describe("How confident you are in this assessment"),
+  signals: z.array(z.object({
+    kind: z.enum(["positive", "negative", "notable"]),
+    text: z.string().describe("Concise signal description, one sentence"),
+  })),
+  skills: z.array(z.string().describe("Specific technology or tool name")),
+  openToWork: z.enum(["yes", "no", "unknown"]).describe("Whether they appear to be actively looking for work — check LinkedIn status, bio, recent activity"),
+  isLawyer: z.enum(["yes", "no", "unknown"]).describe("Whether they are a lawyer, attorney, or legal professional"),
+  hasOwnCompany: z.enum(["yes", "no", "unknown"]).describe("Whether they founded or run their own company"),
+  companyName: z.string().nullable().describe("Name of their company if they have one, or current employer"),
+  aiExperience: z.enum(["none", "basic", "intermediate", "advanced", "unknown"]).describe("Level of AI/ML experience based on repos, skills, and projects"),
+  legalTechRelevance: z.enum(["deep", "adjacent", "transferable", "none", "unknown"]).describe("Connection to legal tech — deep=works in legal tech, adjacent=related field, transferable=relevant skills"),
+  communityActivity: z.enum(["none", "low", "moderate", "high", "unknown"]).describe("How active they are in developer communities — OSS contributions, blog posts, talks, SO answers"),
+  influenceLevel: z.enum(["none", "emerging", "established", "notable", "unknown"]).describe("Sphere of influence — followers, published packages, conference talks, community leadership"),
+  linkedin: z.object({
+    profileUrl: z.string().nullable().describe("LinkedIn profile URL if found"),
+    headline: z.string().nullable().describe("LinkedIn headline"),
+    currentTitle: z.string().nullable().describe("Current job title"),
+    currentCompany: z.string().nullable().describe("Current employer"),
+    location: z.string().nullable().describe("Location from LinkedIn"),
+    connectionCount: z.number().nullable().describe("Number of connections if mentioned"),
+    experience: z.string().nullable().describe("Formatted work history: 'Title at Company (duration)' entries, newline-separated"),
+    education: z.string().nullable().describe("Formatted education: 'Degree, Field at School' entries, newline-separated"),
+    skills: z.string().nullable().describe("Comma-separated LinkedIn skills if listed"),
+    certifications: z.string().nullable().describe("Comma-separated certifications if listed"),
+    recentActivity: z.string().nullable().describe("Summary of recent LinkedIn posts/activity — what topics they post about (legal tech, coding, AI, career, etc.)"),
+  }).nullable().describe("LinkedIn profile data — null if no LinkedIn info found in the report"),
+  webMentions: z.array(z.object({
+    url: z.string(),
+    title: z.string().nullable(),
+    snippet: z.string().describe("Brief description of what was found at this URL"),
+    source: z.enum(["blog", "company", "conference", "social", "portfolio", "news", "other"]),
+  })).describe("Notable web pages found during research — blogs, company pages, talks, portfolios"),
+});
 
 export const maxDuration = 300;
 
@@ -189,20 +232,162 @@ export async function POST(
               }
               break;
             }
-            case "finish":
-              if (narrativeText.trim()) {
+            case "finish": {
+              const narrative = narrativeText.trim();
+              if (narrative) {
                 await prisma.enrichmentLog.create({
                   data: {
                     candidateLogin: login,
                     tool: "__narrative__",
                     input: {},
-                    output: { text: narrativeText.trim() },
+                    output: { text: narrative },
                     createdAt: new Date(),
                   },
                 }).catch(() => {});
+
+                controller.enqueue(sse("tool-start", { tool: "analyze", args: "extracting fit, signals, skills, linkedin, web mentions..." }));
+
+                try {
+                  const settingsRows = await prisma.setting.findMany({
+                    where: { key: { in: ["company_description", "job_descriptions", "hiring_preferences"] } },
+                  });
+                  const settings: Record<string, string> = {};
+                  for (const r of settingsRows) settings[r.key] = r.value;
+
+                  const companyBlock = [
+                    settings.company_description && `Company: ${settings.company_description}`,
+                    settings.job_descriptions && `Open Positions:\n${settings.job_descriptions}`,
+                    settings.hiring_preferences && `Hiring Preferences:\n${settings.hiring_preferences}`,
+                  ].filter(Boolean).join("\n\n");
+
+                  const { object: analysis } = await generateObject({
+                    model: anthropic("claude-sonnet-4-6"),
+                    schema: analysisSchema,
+                    prompt: [
+                      `Analyze this talent research report and extract a structured assessment.`,
+                      companyBlock && `\n${companyBlock}`,
+                      `\nCandidate GitHub login: ${login}\n\nResearch Report:\n${narrative}`,
+                    ].filter(Boolean).join("\n"),
+                    system: [
+                      `You are a talent analysis agent. Extract a structured assessment from the research report provided.`,
+                      companyBlock ? `Score fitScore relative to the company and its open positions described in the prompt.` : `Score fitScore relative to hiring for an AI legal platform engineering team.`,
+                      `Scoring guide:`,
+                      `- fitScore: 1=no fit (ghost/empty account), 2=poor fit (no relevant skills), 3=moderate (some relevant experience), 4=good fit (strong relevant skills), 5=excellent (ideal candidate)`,
+                      `- seniority: based on evidence of experience, code quality, project scope`,
+                      `- confidence: how much evidence the report contains (0.3 for sparse, 0.7+ for thorough)`,
+                      `- signals: be specific and evidence-based, cite repos/projects/findings from the report`,
+                      `- skills: extract specific technologies, languages, frameworks mentioned — not soft skills`,
+                      ``,
+                      `Top-line categories (answer based on evidence in the report):`,
+                      `- openToWork: look for "open to work" badges, "looking for opportunities", "available for hire" signals`,
+                      `- isLawyer: are they a lawyer, attorney, JD, bar-admitted, or legal professional?`,
+                      `- hasOwnCompany: did they found, co-found, or run their own company? companyName: what is it called?`,
+                      `- aiExperience: none=no AI work, basic=uses AI APIs, intermediate=builds AI features, advanced=ML research/models`,
+                      `- legalTechRelevance: deep=works in legal tech, adjacent=compliance/gov-tech/NLP, transferable=relevant skills, none=no connection`,
+                      `- communityActivity: based on OSS contributions, blog posts, conference talks, SO answers, published packages`,
+                      `- influenceLevel: none=invisible, emerging=some followers/posts, established=known in niche, notable=significant following/leadership`,
+                      ``,
+                      `- linkedin: extract any LinkedIn profile data mentioned (URL, headline, title, company, connections, experience, education, skills, recent post topics). Set to null if no LinkedIn data in the report.`,
+                      `- webMentions: extract URLs the agent visited or found — personal blogs, company sites, portfolio pages, conference talks, articles. Include the URL, page title, and a brief snippet of what was found. Do NOT include github.com or linkedin.com URLs here.`,
+                    ].join("\n"),
+                  });
+
+                  const profileData = {
+                    summary: analysis.summary,
+                    fitScore: analysis.fitScore,
+                    fitReasoning: analysis.fitReasoning,
+                    seniority: analysis.seniority,
+                    recommendedOutreach: analysis.recommendedOutreach,
+                    outreachReason: analysis.outreachReason,
+                    confidence: analysis.confidence,
+                    openToWork: analysis.openToWork,
+                    isLawyer: analysis.isLawyer,
+                    hasOwnCompany: analysis.hasOwnCompany,
+                    companyName: analysis.companyName,
+                    aiExperience: analysis.aiExperience,
+                    legalTechRelevance: analysis.legalTechRelevance,
+                    communityActivity: analysis.communityActivity,
+                    influenceLevel: analysis.influenceLevel,
+                    model: "claude-sonnet-4-6",
+                    rawJson: JSON.stringify(analysis),
+                  };
+
+                  await prisma.$transaction(async (tx) => {
+                    await tx.profile.upsert({
+                      where: { candidateLogin: login },
+                      create: { candidateLogin: login, ...profileData },
+                      update: { ...profileData, generatedAt: new Date() },
+                    });
+
+                    await tx.signal.deleteMany({ where: { candidateLogin: login } });
+                    for (const s of analysis.signals) {
+                      await tx.signal.create({ data: { candidateLogin: login, kind: s.kind, text: s.text } });
+                    }
+
+                    await tx.skill.deleteMany({ where: { candidateLogin: login } });
+                    for (const name of analysis.skills) {
+                      await tx.skill.create({ data: { candidateLogin: login, name } });
+                    }
+
+                    if (analysis.linkedin) {
+                      const li = analysis.linkedin;
+                      await tx.linkedInProfile.upsert({
+                        where: { candidateLogin: login },
+                        create: {
+                          candidateLogin: login,
+                          profileUrl: li.profileUrl,
+                          headline: li.headline,
+                          currentTitle: li.currentTitle,
+                          currentCompany: li.currentCompany,
+                          location: li.location,
+                          connectionCount: li.connectionCount,
+                          experience: li.experience,
+                          education: li.education,
+                          skills: li.skills,
+                          certifications: li.certifications,
+                          recentActivity: li.recentActivity,
+                        },
+                        update: {
+                          profileUrl: li.profileUrl,
+                          headline: li.headline,
+                          currentTitle: li.currentTitle,
+                          currentCompany: li.currentCompany,
+                          location: li.location,
+                          connectionCount: li.connectionCount,
+                          experience: li.experience,
+                          education: li.education,
+                          skills: li.skills,
+                          certifications: li.certifications,
+                          recentActivity: li.recentActivity,
+                          scrapedAt: new Date(),
+                        },
+                      });
+                    }
+
+                    if (analysis.webMentions.length > 0) {
+                      await tx.webMention.deleteMany({ where: { candidateLogin: login } });
+                      for (const wm of analysis.webMentions) {
+                        await tx.webMention.create({
+                          data: {
+                            candidateLogin: login,
+                            url: wm.url,
+                            title: wm.title,
+                            snippet: wm.snippet ?? "",
+                            source: wm.source,
+                          },
+                        });
+                      }
+                    }
+                  });
+                } catch (e: any) {
+                  console.error("[analyze] Failed to generate analysis:", e.message);
+                }
+
+                controller.enqueue(sse("tool-end", { tool: "analyze" }));
               }
               controller.enqueue(sse("done", {}));
               break;
+            }
           }
         }
       } catch (e: any) {

@@ -26,6 +26,7 @@ export async function Topbar({ candidateLogin }: Props) {
       </span>
       <div className="spacer" />
       <div className="meta">
+        <Link href="/settings" style={{ fontSize: 12, color: "var(--color-fg-muted)", textDecoration: "none" }}>Settings</Link>
         <span className="live-pill">
           <span className="live-dot" />
           Pipeline ready

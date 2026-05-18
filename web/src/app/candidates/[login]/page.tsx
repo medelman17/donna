@@ -162,7 +162,7 @@ export default async function CandidatePage({ params }: Props) {
 
           <aside className="detail-aside">
             <CrmPanel login={login}
-              status={crm?.status ?? "new"} notes={crm?.notes ?? null} tags={crm?.tags ?? null}
+              status={crm?.status ?? "new"} bookmarked={crm?.bookmarked ?? false} notes={crm?.notes ?? null} tags={crm?.tags ?? null}
               fitScore={profile?.fitScore ?? null}
               recommendedOutreach={profile?.recommendedOutreach ?? null}
               confidence={profile?.confidence ?? null}

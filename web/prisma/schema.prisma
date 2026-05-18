@@ -84,6 +84,14 @@ model Profile {
   recommendedOutreach String?
   outreachReason      String?
   confidence          Float?
+  openToWork          String?
+  isLawyer            String?
+  hasOwnCompany       String?
+  companyName         String?
+  aiExperience        String?
+  legalTechRelevance  String?
+  communityActivity   String?
+  influenceLevel      String?
   model               String?
   promptVersion       Int       @default(1)
   generatedAt         DateTime  @default(now())
@@ -111,6 +119,7 @@ model Crm {
   candidateLogin String    @unique
   candidate      Candidate @relation(fields: [candidateLogin], references: [login], onDelete: Cascade)
   status         String    @default("new")
+  bookmarked     Boolean   @default(false)
   notes          String?
   tags           String?
   updatedAt      DateTime  @updatedAt
@@ -130,6 +139,7 @@ model LinkedInProfile {
   education       String?
   skills          String?
   certifications  String?
+  recentActivity  String?
   scrapedAt       DateTime  @default(now())
 }
 
@@ -159,6 +169,13 @@ model EnrichmentLog {
   @@index([candidateLogin])
   @@index([tool])
   @@index([createdAt])
+}
+
+model Setting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
 }
 
 model AgentMemory {

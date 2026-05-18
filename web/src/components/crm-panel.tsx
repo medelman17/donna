@@ -5,7 +5,7 @@ import { updateCrm } from "@/app/candidates/[login]/actions";
 import { fmtNum } from "./atoms";
 
 type Props = {
-  login: string; status: string; notes: string | null; tags: string | null;
+  login: string; status: string; bookmarked: boolean; notes: string | null; tags: string | null;
   fitScore: number | null; recommendedOutreach: string | null;
   confidence: number | null; model: string | null;
   followers: number; publicRepos: number; githubCreatedAt: Date | null;
@@ -13,12 +13,13 @@ type Props = {
 };
 
 export function CrmPanel({
-  login, status: initStatus, notes: initNotes, tags: initTags,
+  login, status: initStatus, bookmarked: initBookmarked, notes: initNotes, tags: initTags,
   fitScore, recommendedOutreach, confidence, model,
   followers, publicRepos, githubCreatedAt,
   hasOwnCommits, aheadBy, behindBy, forkPushedAt,
 }: Props) {
   const [status, setStatus] = useState(initStatus);
+  const [bookmarked, setBookmarked] = useState(initBookmarked);
   const [notes, setNotes] = useState(initNotes ?? "");
   const [tagInput, setTagInput] = useState(initTags ?? "");
   const [saving, setSaving] = useState<null | "saving" | "saved">(null);
@@ -26,10 +27,11 @@ export function CrmPanel({
 
   useEffect(() => {
     setStatus(initStatus);
+    setBookmarked(initBookmarked);
     setNotes(initNotes ?? "");
     setTagInput(initTags ?? "");
     setSaving(null);
-  }, [login, initStatus, initNotes, initTags]);
+  }, [login, initStatus, initBookmarked, initNotes, initTags]);
 
   const flash = () => {
     setSaving("saving");
@@ -78,10 +80,40 @@ export function CrmPanel({
 
   const savedTags = tagInput.split(",").map(t => t.trim()).filter(Boolean);
 
+  const handleBookmark = () => {
+    const next = !bookmarked;
+    setBookmarked(next);
+    updateCrm(login, { bookmarked: next });
+    flash();
+  };
+
   return (
     <div className="aside">
       <div>
-        <h3>CRM</h3>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <h3>CRM</h3>
+          <button
+            onClick={handleBookmark}
+            title={bookmarked ? "Remove bookmark" : "Bookmark this candidate"}
+            style={{
+              appearance: "none",
+              border: "1px solid " + (bookmarked ? "color-mix(in oklab, #f59e0b, transparent 40%)" : "var(--color-border)"),
+              background: bookmarked ? "color-mix(in oklab, #f59e0b, transparent 90%)" : "transparent",
+              color: bookmarked ? "#f59e0b" : "var(--color-fg-subtle)",
+              borderRadius: "var(--radius-DEFAULT)",
+              padding: "3px 10px",
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              transition: "all 0.15s ease",
+            }}
+          >
+            {bookmarked ? "★" : "☆"} {bookmarked ? "Saved" : "Save"}
+          </button>
+        </div>
         <div className="field">
           <label>Status {savingEl}</label>
           <select value={status} onChange={e => handleStatus(e.target.value)}>
