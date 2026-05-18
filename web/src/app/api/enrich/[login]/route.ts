@@ -52,34 +52,56 @@ export async function POST(
     },
   });
 
-  const transformStream = new TransformStream({
-    transform(chunk, controller) {
-      switch (chunk.type) {
-        case "text-delta":
-          controller.enqueue(formatEvent({ type: "text", text: chunk.textDelta }));
-          break;
-        case "tool-call":
-          controller.enqueue(formatEvent({
-            type: "tool-call",
-            toolName: chunk.toolName,
-            args: JSON.stringify(chunk.args).slice(0, 200),
-          }));
-          break;
-        case "tool-result":
-          controller.enqueue(formatEvent({
-            type: "tool-result",
-            toolName: chunk.toolName,
-            result: typeof chunk.result === "string" ? chunk.result.slice(0, 200) : JSON.stringify(chunk.result).slice(0, 200),
-          }));
-          break;
-        case "finish":
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        for await (const chunk of result.fullStream) {
+          // Log chunk type and keys for debugging
+          const keys = Object.keys(chunk).join(",");
+          console.log(`[enrich-stream] type=${chunk.type} keys=${keys}`);
+
+          switch (chunk.type) {
+            case "text-delta": {
+              const text = (chunk as any).text ?? (chunk as any).textDelta ?? "";
+              if (text) controller.enqueue(formatEvent({ type: "text", text }));
+              break;
+            }
+            case "tool-call":
+              controller.enqueue(formatEvent({
+                type: "tool-call",
+                toolName: (chunk as any).toolName ?? "",
+                args: JSON.stringify((chunk as any).input ?? (chunk as any).args ?? {}).slice(0, 200),
+              }));
+              break;
+            case "tool-result":
+              controller.enqueue(formatEvent({
+                type: "tool-result",
+                toolName: (chunk as any).toolName ?? "",
+                result: typeof (chunk as any).output === "string"
+                  ? (chunk as any).output.slice(0, 200)
+                  : JSON.stringify((chunk as any).output ?? (chunk as any).result ?? {}).slice(0, 200),
+              }));
+              break;
+            case "finish":
+              controller.enqueue(formatEvent({ type: "done" }));
+              break;
+            default:
+              // Catch any other chunk types
+              console.log(`[enrich-stream] unhandled: ${JSON.stringify(chunk).slice(0, 300)}`);
+              break;
+          }
+        }
+      } catch (e: any) {
+        if (e.name !== "AbortError") {
           controller.enqueue(formatEvent({ type: "done" }));
-          break;
+        }
+      } finally {
+        controller.close();
       }
     },
   });
 
-  return new Response(result.fullStream.pipeThrough(transformStream), {
+  return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
