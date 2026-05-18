@@ -23,7 +23,7 @@ export const legalAssessTool = tool({
         system: LEGAL_PROMPT,
         prompt: `Assess legal-tech relevance for '${login}'. Context: ${context || "none"}`,
         tools: { gh_query: ghQueryTool, web_search: webSearchTool },
-        stopWhen: stepCountIs(8),
+        stopWhen: stepCountIs(15),
         abortSignal,
       });
       return text || "Could not assess legal relevance.";

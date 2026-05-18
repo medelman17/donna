@@ -60,7 +60,7 @@ export async function runEnrichment(login: string) {
     system: ENRICHMENT_SYSTEM_PROMPT,
     prompt: `Research the GitHub developer '${login}' who forked willchen96/mike (an AI legal platform). Start by pulling their GitHub data, then use what you find to search the web for their professional presence.`,
     tools: enrichmentTools,
-    stopWhen: stepCountIs(25),
+    stopWhen: stepCountIs(50),
     onStepFinish: async ({ toolCalls, toolResults }) => {
       for (const tc of toolCalls) {
         const tr = toolResults.find((r: any) => r.toolCallId === tc.toolCallId);

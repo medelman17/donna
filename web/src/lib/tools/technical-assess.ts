@@ -25,7 +25,7 @@ export const technicalAssessTool = tool({
         system: ASSESSOR_PROMPT,
         prompt: `Assess the technical ability of '${login}' by reading code from: ${repoList}`,
         tools: { gh_query: ghQueryTool },
-        stopWhen: stepCountIs(8),
+        stopWhen: stepCountIs(15),
         abortSignal,
       });
       return text || "Assessment could not be completed.";
