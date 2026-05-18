@@ -41,6 +41,49 @@ export async function POST(
   });
 
   const encoder = new TextEncoder();
+
+  function sse(event: string, data: unknown) {
+    return encoder.encode(`data: ${JSON.stringify({ event, ...data as any })}\n\n`);
+  }
+
+  function cardsFromToolResult(toolName: string, output: string): Array<{ card: string; props: Record<string, unknown> }> {
+    const cards: Array<{ card: string; props: Record<string, unknown> }> = [];
+    try {
+      const data = JSON.parse(output);
+
+      if (toolName === "gh_query" && data.login && data.avatar_url) {
+        cards.push({ card: "ProfileHeader", props: {
+          name: data.name ?? null, login: data.login,
+          avatar: data.avatar_url, bio: data.bio ?? null,
+          location: data.location ?? null, company: data.company ?? null,
+        }});
+        const metrics: { label: string; value: string; sub?: string }[] = [];
+        if (data.public_repos != null) metrics.push({ label: "Public Repos", value: String(data.public_repos) });
+        if (data.followers != null) metrics.push({ label: "Followers", value: String(data.followers) });
+        if (data.following != null) metrics.push({ label: "Following", value: String(data.following) });
+        if (data.created_at) {
+          const yr = new Date(data.created_at).getFullYear();
+          const age = new Date().getFullYear() - yr;
+          metrics.push({ label: "Account Age", value: age > 0 ? `~${age} yrs` : "<1 yr", sub: `since ${yr}` });
+        }
+        if (data.twitter_username) metrics.push({ label: "Twitter", value: `@${data.twitter_username}` });
+        if (metrics.length) cards.push({ card: "MetricGrid", props: { metrics } });
+      }
+
+      if (toolName === "gh_query" && Array.isArray(data)) {
+        const repos = data.filter((r: any) => r.name && r.full_name).slice(0, 5);
+        for (const r of repos) {
+          cards.push({ card: "RepoCard", props: {
+            name: r.name, language: r.language ?? null,
+            stars: r.stargazers_count ?? 0,
+            description: r.description ?? null,
+          }});
+        }
+      }
+    } catch {}
+    return cards;
+  }
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -49,20 +92,39 @@ export async function POST(
           switch (chunk.type) {
             case "start-step":
               if (stepCount > 0) {
-                controller.enqueue(encoder.encode("\n\n"));
+                controller.enqueue(sse("sep", {}));
               }
               stepCount++;
               break;
             case "text-delta": {
               const text = (chunk as any).text ?? (chunk as any).textDelta ?? "";
-              if (text) controller.enqueue(encoder.encode(text));
+              if (text) controller.enqueue(sse("text", { text }));
               break;
             }
+            case "tool-call":
+              controller.enqueue(sse("tool-start", {
+                tool: (chunk as any).toolName,
+                args: JSON.stringify((chunk as any).input ?? {}).slice(0, 120),
+              }));
+              break;
+            case "tool-result": {
+              const toolName = (chunk as any).toolName ?? "";
+              const output = typeof (chunk as any).output === "string" ? (chunk as any).output : JSON.stringify((chunk as any).output ?? "");
+              controller.enqueue(sse("tool-end", { tool: toolName }));
+              const cards = cardsFromToolResult(toolName, output);
+              for (const c of cards) {
+                controller.enqueue(sse("card", c));
+              }
+              break;
+            }
+            case "finish":
+              controller.enqueue(sse("done", {}));
+              break;
           }
         }
       } catch (e: any) {
         if (e.name !== "AbortError") {
-          controller.enqueue(encoder.encode("\n\n[Error: enrichment interrupted]"));
+          controller.enqueue(sse("done", {}));
         }
       } finally {
         controller.close();
@@ -72,9 +134,9 @@ export async function POST(
 
   return new Response(stream, {
     headers: {
-      "Content-Type": "text/plain; charset=utf-8",
+      "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      "X-Content-Type-Options": "nosniff",
+      Connection: "keep-alive",
     },
   });
 }

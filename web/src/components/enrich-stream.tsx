@@ -8,57 +8,26 @@ import { enrichComponents } from "@/lib/enrich-components";
 
 type ContentBlock =
   | { type: "text"; text: string }
-  | { type: "card"; card: string; props: Record<string, unknown> };
-
-function tryParseCard(line: string): { card: string; props: Record<string, unknown>; remainder: string } | null {
-  const trimmed = line.trim();
-  if (!trimmed.startsWith('{"card"')) return null;
-  try {
-    const parsed = JSON.parse(trimmed);
-    if (parsed.card && typeof parsed.card === "string") {
-      return { card: parsed.card, props: parsed.props ?? {}, remainder: "" };
-    }
-  } catch {
-    // Model may have appended text after the JSON — find where the JSON object ends
-    let depth = 0;
-    for (let i = 0; i < trimmed.length; i++) {
-      if (trimmed[i] === "{") depth++;
-      else if (trimmed[i] === "}") {
-        depth--;
-        if (depth === 0) {
-          const jsonPart = trimmed.slice(0, i + 1);
-          const rest = trimmed.slice(i + 1).trim();
-          try {
-            const parsed = JSON.parse(jsonPart);
-            if (parsed.card && typeof parsed.card === "string") {
-              return { card: parsed.card, props: parsed.props ?? {}, remainder: rest };
-            }
-          } catch {}
-          break;
-        }
-      }
-    }
-  }
-  return null;
-}
+  | { type: "card"; card: string; props: Record<string, unknown> }
+  | { type: "tool"; tool: string; status: "running" | "done" };
 
 export function EnrichStream({ login, onDone }: { login: string; onDone: () => void }) {
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [partial, setPartial] = useState("");
-  const [thinking, setThinking] = useState(false);
   const [status, setStatus] = useState<"connecting" | "streaming" | "done">("connecting");
   const [elapsed, setElapsed] = useState(0);
+  const [thinking, setThinking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const startRef = useRef(Date.now());
   const blocksRef = useRef<ContentBlock[]>([]);
-  const lastDataRef = useRef(Date.now());
+  const lastTextRef = useRef(Date.now());
   const router = useRouter();
 
   useEffect(() => {
     const timer = setInterval(() => {
       setElapsed(Math.floor((Date.now() - startRef.current) / 1000));
-      if (status === "streaming" && Date.now() - lastDataRef.current > 2000) {
+      if (status === "streaming" && Date.now() - lastTextRef.current > 2000) {
         setThinking(true);
       }
     }, 500);
@@ -69,6 +38,7 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
     let cancelled = false;
     const controller = new AbortController();
     abortRef.current = controller;
+    let rafId = 0;
 
     const pushBlock = (block: ContentBlock) => {
       const last = blocksRef.current[blocksRef.current.length - 1];
@@ -80,7 +50,11 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
       }
     };
 
-    const flushBlocks = () => setBlocks([...blocksRef.current]);
+    const flush = () => setBlocks([...blocksRef.current]);
+    const scheduleFlush = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(flush);
+    };
 
     const run = async () => {
       try {
@@ -97,67 +71,95 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
 
         const decoder = new TextDecoder();
         let buffer = "";
-        let rafId = 0;
-
-        const scheduleFlush = () => {
-          cancelAnimationFrame(rafId);
-          rafId = requestAnimationFrame(flushBlocks);
-        };
+        let textAccum = "";
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          lastDataRef.current = Date.now();
-          setThinking(false);
-
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split("\n");
           buffer = lines.pop() || "";
 
-          let hasCard = false;
           for (const line of lines) {
-            const card = line.trim() ? tryParseCard(line) : null;
-            if (card) {
-              pushBlock({ type: "card", card: card.card, props: card.props });
-              hasCard = true;
-              if (card.remainder) {
-                pushBlock({ type: "text", text: card.remainder + "\n" });
+            const trimmed = line.trim();
+            if (!trimmed || !trimmed.startsWith("data: ")) continue;
+
+            let evt: any;
+            try { evt = JSON.parse(trimmed.slice(6)); } catch { continue; }
+
+            switch (evt.event) {
+              case "text":
+                lastTextRef.current = Date.now();
+                setThinking(false);
+                textAccum += evt.text;
+                setPartial(textAccum);
+                scheduleFlush();
+                break;
+
+              case "sep":
+                if (textAccum) {
+                  pushBlock({ type: "text", text: textAccum });
+                  textAccum = "";
+                  setPartial("");
+                }
+                flush();
+                break;
+
+              case "tool-start":
+                if (textAccum) {
+                  pushBlock({ type: "text", text: textAccum });
+                  textAccum = "";
+                  setPartial("");
+                }
+                pushBlock({ type: "tool", tool: evt.tool, status: "running" });
+                flush();
+                setThinking(true);
+                lastTextRef.current = Date.now();
+                break;
+
+              case "tool-end": {
+                const idx = blocksRef.current.findLastIndex(
+                  (b) => b.type === "tool" && b.tool === evt.tool && b.status === "running"
+                );
+                if (idx >= 0) {
+                  (blocksRef.current[idx] as any).status = "done";
+                  blocksRef.current = [...blocksRef.current];
+                }
+                setThinking(false);
+                flush();
+                break;
               }
-            } else {
-              pushBlock({ type: "text", text: line + "\n" });
+
+              case "card":
+                pushBlock({ type: "card", card: evt.card, props: evt.props });
+                flush();
+                break;
+
+              case "done":
+                if (textAccum) {
+                  pushBlock({ type: "text", text: textAccum });
+                  textAccum = "";
+                  setPartial("");
+                }
+                flush();
+                setStatus("done");
+                setTimeout(() => {
+                  router.refresh();
+                  onDone();
+                }, 2500);
+                break;
             }
           }
-
-          setPartial(buffer);
-          if (hasCard) {
-            cancelAnimationFrame(rafId);
-            flushBlocks();
-          } else {
-            scheduleFlush();
-          }
         }
 
+        if (textAccum) {
+          pushBlock({ type: "text", text: textAccum });
+          setPartial("");
+        }
         cancelAnimationFrame(rafId);
-
-        if (buffer.trim()) {
-          const card = tryParseCard(buffer);
-          if (card) {
-            pushBlock({ type: "card", card: card.card, props: card.props });
-            if (card.remainder) pushBlock({ type: "text", text: card.remainder });
-          } else {
-            pushBlock({ type: "text", text: buffer });
-          }
-        }
-        flushBlocks();
-
-        setPartial("");
-        setThinking(false);
-        setStatus("done");
-        setTimeout(() => {
-          router.refresh();
-          onDone();
-        }, 2500);
+        flush();
+        if (status !== "done") setStatus("done");
       } catch (e: any) {
         if (e.name !== "AbortError") {
           console.error("[enrich-stream] error:", e);
@@ -172,6 +174,7 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
     return () => {
       cancelled = true;
       controller.abort();
+      cancelAnimationFrame(rafId);
     };
   }, [login]);
 
@@ -188,9 +191,8 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
     setThinking(false);
   }, []);
 
+  const toolCount = blocks.filter((b) => b.type === "tool").length;
   const cardCount = blocks.filter((b) => b.type === "card").length;
-  const pt = partial.trim();
-  const partialVisible = pt && !pt.startsWith("{");
 
   return (
     <div className="dx" style={{ padding: "16px 28px" }}>
@@ -210,7 +212,13 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
       >
         <span style={{ fontWeight: 600, color: "var(--color-accent)" }}>{login}</span>
         <span style={{ color: "var(--color-fg-muted)" }}>·</span>
-        <span style={{ fontVariantNumeric: "tabular-nums" }}>{cardCount} cards</span>
+        <span style={{ fontVariantNumeric: "tabular-nums" }}>{toolCount} tools</span>
+        {cardCount > 0 && (
+          <>
+            <span style={{ color: "var(--color-fg-muted)" }}>·</span>
+            <span style={{ fontVariantNumeric: "tabular-nums" }}>{cardCount} cards</span>
+          </>
+        )}
         <span style={{ color: "var(--color-fg-muted)" }}>·</span>
         <span style={{ fontVariantNumeric: "tabular-nums" }}>{elapsed}s</span>
 
@@ -242,15 +250,8 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
 
       {/* Content */}
       <div ref={scrollRef} style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}>
-        {blocks.length === 0 && !partialVisible && status === "connecting" && (
-          <div
-            style={{
-              color: "var(--color-fg-subtle)",
-              fontSize: 13,
-              padding: 20,
-              textAlign: "center",
-            }}
-          >
+        {blocks.length === 0 && !partial && status === "connecting" && (
+          <div style={{ color: "var(--color-fg-subtle)", fontSize: 13, padding: 20, textAlign: "center" }}>
             Starting enrichment agent...
           </div>
         )}
@@ -260,18 +261,9 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
             if (block.type === "text") {
               const text = block.text.trim();
               if (!text) return null;
-              const isLast = i === blocks.length - 1;
-              const isStreaming = isLast && status === "streaming";
               return (
                 <div key={i} className="enrich-prose">
-                  {isStreaming ? (
-                    <>
-                      <span>{text}</span>
-                      {!partialVisible && <span className="enrich-cursor" />}
-                    </>
-                  ) : (
-                    <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
-                  )}
+                  <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
                 </div>
               );
             }
@@ -280,11 +272,44 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
               if (!Component) return null;
               return <Component key={i} props={block.props as any} />;
             }
+            if (block.type === "tool") {
+              const color = block.status === "done" ? "#16a34a" : "var(--color-accent)";
+              const icon = block.status === "done" ? "✓" : "●";
+              return (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "3px 14px",
+                    fontSize: 11.5,
+                    fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
+                    color: "var(--color-fg-muted)",
+                  }}
+                >
+                  <span style={{ color, flexShrink: 0, fontWeight: 600 }}>{icon}</span>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      padding: "1px 6px",
+                      borderRadius: 3,
+                      background: "var(--color-bg-2)",
+                      fontSize: 10.5,
+                      fontWeight: 500,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {block.tool}
+                  </span>
+                </div>
+              );
+            }
             return null;
           })}
 
-          {/* Streaming partial text (typewriter) */}
-          {partialVisible && (
+          {/* Streaming partial text */}
+          {partial && (
             <div className="enrich-prose">
               <span>{partial}</span>
               <span className="enrich-cursor" />
