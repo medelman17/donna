@@ -5,7 +5,7 @@ from rich.console import Console
 from rich.table import Table
 
 from scout import db, pipeline
-from scout.config import DB_PATH
+from scout.cache import cache_stats
 
 app = typer.Typer(help="Talent Scout — GitHub fork profiler pipeline")
 console = Console()
@@ -20,16 +20,9 @@ def fetch_forks():
 
 @app.command()
 def enrich(limit: Optional[int] = typer.Option(None, help="Max candidates to enrich")):
-    """Enrich candidates with GitHub profile, repos, and events."""
+    """Agent-driven enrichment (GitHub + web + LinkedIn) per candidate."""
     count = pipeline.run_enrich(limit)
     console.print(f"[bold green]Done.[/bold green] {count} candidates enriched.")
-
-
-@app.command()
-def web_enrich(limit: Optional[int] = typer.Option(None, help="Max candidates")):
-    """Enrich candidates with LinkedIn and web presence data."""
-    count = pipeline.run_web_enrich(limit)
-    console.print(f"[bold green]Done.[/bold green] {count} candidates web-enriched.")
 
 
 @app.command()
@@ -41,24 +34,23 @@ def analyze(limit: Optional[int] = typer.Option(None, help="Max candidates to an
 
 @app.command()
 def run():
-    """Run full pipeline: fetch-forks -> enrich -> web-enrich -> analyze."""
+    """Run full pipeline: fetch-forks -> enrich -> analyze."""
     pipeline.run_full_pipeline()
     console.print("[bold green]Full pipeline complete.[/bold green]")
 
 
 @app.command()
-def deep_dive(login: str = typer.Argument(help="GitHub login to deep-dive")):
-    """Deep-dive a single candidate using Claude Agent SDK."""
-    import asyncio
-    from scout.deep_dive import run_deep_dive
-    result = asyncio.run(run_deep_dive(login))
-    console.print(result)
+def deep_dive(login: str = typer.Argument(help="GitHub login to re-enrich")):
+    """Re-run agent enrichment for a single candidate."""
+    from scout.enrich import enrich_candidate
+    result = enrich_candidate(login)
+    console.print(f"[bold green]Done.[/bold green] {result['tool_calls']} tool calls.")
 
 
 @app.command()
 def stats():
     """Print pipeline statistics."""
-    conn = db.connect(DB_PATH)
+    conn = db.connect()
     s = db.get_stats(conn)
     conn.close()
 
@@ -67,11 +59,22 @@ def stats():
     table.add_column("Count", justify="right", style="green")
 
     table.add_row("Total candidates", str(s["candidates"]))
-    table.add_row("GitHub enriched", str(s["enriched"]))
-    table.add_row("Web enriched", str(s["web_enriched"]))
-    table.add_row("Analyzed", str(s["analyzed"]))
+    table.add_row("Enriched (have repos)", str(s["enriched"]))
+    table.add_row("Analyzed (have profile)", str(s["analyzed"]))
+    table.add_row("Tool calls logged", str(s["tool_calls"]))
     table.add_row("", "")
     for status in ["new", "reviewing", "interested", "contacted", "passed", "hired"]:
         table.add_row(f"Status: {status}", str(s[status]))
+
+    # Redis cache stats
+    try:
+        cs = cache_stats()
+        if cs:
+            table.add_row("", "")
+            table.add_row("[bold]Redis Cache[/bold]", "")
+            for ns, count in sorted(cs.items()):
+                table.add_row(f"  {ns}", str(count))
+    except Exception:
+        pass
 
     console.print(table)

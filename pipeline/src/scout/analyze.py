@@ -1,5 +1,5 @@
 import json
-import sqlite3
+import psycopg
 import anthropic
 
 from scout.config import MODEL, get_api_key
@@ -10,7 +10,7 @@ from scout import db
 MAX_CONTINUATIONS = 5
 
 
-def analyze_candidate(conn: sqlite3.Connection, bundle: dict) -> dict | None:
+def analyze_candidate(conn: psycopg.Connection, bundle: dict) -> dict | None:
     login = bundle["login"]
     client = anthropic.Anthropic(api_key=get_api_key())
     user_message = build_user_message(bundle)
@@ -66,7 +66,7 @@ def analyze_candidate(conn: sqlite3.Connection, bundle: dict) -> dict | None:
     return None
 
 
-def _persist(conn: sqlite3.Connection, login: str, data: dict) -> None:
+def _persist(conn: psycopg.Connection, login: str, data: dict) -> None:
     db.upsert_profile(conn, login, data)
     db.insert_signals(conn, login, data.get("signals", []))
     db.insert_skills(conn, login, data.get("skills", []))

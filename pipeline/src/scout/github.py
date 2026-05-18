@@ -1,32 +1,14 @@
 import json
 import subprocess
-from pathlib import Path
 from typing import Any
 
-from scout.config import CACHE_DIR
-
-
-def _cache_path(key: str) -> Path:
-    safe = key.replace("/", "__").replace("?", "_q_").replace("&", "_a_")
-    return CACHE_DIR / f"{safe}.json"
-
-
-def _read_cache(key: str) -> Any | None:
-    p = _cache_path(key)
-    if p.exists():
-        return json.loads(p.read_text())
-    return None
-
-
-def _write_cache(key: str, data: Any) -> None:
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    _cache_path(key).write_text(json.dumps(data))
+from scout.cache import cache_get, cache_set
 
 
 def gh_api(endpoint: str, paginate: bool = False, use_cache: bool = True) -> Any:
     cache_key = f"{'pag_' if paginate else ''}{endpoint}"
     if use_cache:
-        cached = _read_cache(cache_key)
+        cached = cache_get("gh", cache_key)
         if cached is not None:
             return cached
 
@@ -54,7 +36,7 @@ def gh_api(endpoint: str, paginate: bool = False, use_cache: bool = True) -> Any
         data = json.loads(text)
 
     if use_cache:
-        _write_cache(cache_key, data)
+        cache_set("gh", cache_key, data, ttl=3600)
     return data
 
 

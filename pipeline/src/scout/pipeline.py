@@ -1,4 +1,3 @@
-import sqlite3
 import time
 
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, MofNCompleteColumn
@@ -6,10 +5,9 @@ from rich.console import Console
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from scout import db, github
-from scout.config import DB_PATH, FORK_REPO
+from scout.config import FORK_REPO
 from scout.enrich import enrich_candidate
 from scout.analyze import analyze_candidate
-from scout.web_enrich import web_enrich_candidate, LINKEDIN_DELAY_SECONDS
 
 console = Console()
 
@@ -18,37 +16,8 @@ class RetryableError(Exception):
     pass
 
 
-@retry(
-    retry=retry_if_exception_type(RetryableError),
-    wait=wait_exponential(multiplier=1, min=2, max=60),
-    stop=stop_after_attempt(5),
-)
-def _enrich_with_retry(conn: sqlite3.Connection, login: str) -> None:
-    try:
-        enrich_candidate(conn, login)
-    except RuntimeError as e:
-        if "rate limit" in str(e).lower() or "502" in str(e) or "503" in str(e):
-            raise RetryableError(str(e)) from e
-        raise
-
-
-@retry(
-    retry=retry_if_exception_type(RetryableError),
-    wait=wait_exponential(multiplier=2, min=4, max=120),
-    stop=stop_after_attempt(3),
-)
-def _analyze_with_retry(conn: sqlite3.Connection, bundle: dict) -> dict | None:
-    try:
-        return analyze_candidate(conn, bundle)
-    except Exception as e:
-        err = str(e).lower()
-        if "429" in err or "overloaded" in err or "rate" in err or "529" in err:
-            raise RetryableError(str(e)) from e
-        raise
-
-
 def run_fetch_forks() -> int:
-    conn = db.connect(DB_PATH)
+    conn = db.connect()
     forks = github.fetch_forks(FORK_REPO)
     console.print(f"[bold]Fetched {len(forks)} forks[/bold]")
 
@@ -70,57 +39,55 @@ def run_fetch_forks() -> int:
 
 
 def run_enrich(limit: int | None = None) -> int:
-    conn = db.connect(DB_PATH)
+    conn = db.connect()
     logins = db.get_unenriched_logins(conn, limit)
-    console.print(f"[bold]Enriching {len(logins)} candidates[/bold]")
+    conn.close()
+    console.print(f"[bold]Agent-enriching {len(logins)} candidates[/bold]\n")
 
     enriched = 0
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
-                  BarColumn(), MofNCompleteColumn(), console=console) as progress:
-        task = progress.add_task("Enriching...", total=len(logins))
-        for login in logins:
-            try:
-                _enrich_with_retry(conn, login)
-                enriched += 1
-            except Exception as e:
-                console.print(f"[red]Failed to enrich {login}: {e}[/red]")
-            progress.advance(task)
+    for i, login in enumerate(logins, 1):
+        console.print(f"[bold]── Candidate {i}/{len(logins)} ──[/bold]")
+        try:
+            result = enrich_candidate(login)
+            enriched += 1
+            console.print(
+                f"  [green]{login}[/green] — {result['tool_calls']} tools, "
+                f"{result['duration_ms']/1000:.1f}s"
+            )
+        except Exception as e:
+            console.print(f"  [red]{login} failed: {e}[/red]")
+        console.print()
 
-    conn.close()
+    console.print(f"\n[bold]Enrichment complete: {enriched}/{len(logins)} candidates[/bold]")
     return enriched
 
 
-def run_web_enrich(limit: int | None = None) -> int:
-    conn = db.connect(DB_PATH)
-    logins = db.get_unweb_enriched_logins(conn, limit)
-    console.print(f"[bold]Web-enriching {len(logins)} candidates[/bold]")
-
-    enriched = 0
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
-                  BarColumn(), MofNCompleteColumn(), console=console) as progress:
-        task = progress.add_task("Web enriching...", total=len(logins))
-        for login in logins:
-            try:
-                if web_enrich_candidate(conn, login):
-                    enriched += 1
-            except Exception as e:
-                console.print(f"[red]Failed to web-enrich {login}: {e}[/red]")
-            progress.advance(task)
-            time.sleep(LINKEDIN_DELAY_SECONDS)
-
-    conn.close()
-    return enriched
+@retry(
+    retry=retry_if_exception_type(RetryableError),
+    wait=wait_exponential(multiplier=2, min=4, max=120),
+    stop=stop_after_attempt(3),
+)
+def _analyze_with_retry(bundle: dict) -> dict | None:
+    try:
+        conn = db.connect()
+        result = analyze_candidate(conn, bundle)
+        conn.close()
+        return result
+    except Exception as e:
+        err = str(e).lower()
+        if "429" in err or "overloaded" in err or "rate" in err or "529" in err:
+            raise RetryableError(str(e)) from e
+        raise
 
 
 def run_analyze(limit: int | None = None) -> int:
-    conn = db.connect(DB_PATH)
+    conn = db.connect()
     logins = db.get_unanalyzed_logins(conn, limit)
     console.print(f"[bold]Analyzing {len(logins)} candidates with Claude[/bold]")
 
     analyzed = 0
     total_input = 0
     total_output = 0
-    total_cache_read = 0
 
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
                   BarColumn(), MofNCompleteColumn(), console=console) as progress:
@@ -131,16 +98,14 @@ def run_analyze(limit: int | None = None) -> int:
                 progress.advance(task)
                 continue
             try:
-                result = _analyze_with_retry(conn, bundle)
+                result = _analyze_with_retry(bundle)
                 if result:
                     analyzed += 1
                     total_input += result.get("input_tokens", 0)
                     total_output += result.get("output_tokens", 0)
-                    total_cache_read += result.get("cache_read", 0)
                     progress.console.print(
                         f"  [green]{login}[/green] fit={result.get('fit_score')} "
-                        f"in={result.get('input_tokens')} out={result.get('output_tokens')} "
-                        f"cached={result.get('cache_read')}"
+                        f"in={result.get('input_tokens')} out={result.get('output_tokens')}"
                     )
             except Exception as e:
                 console.print(f"[red]Failed to analyze {login}: {e}[/red]")
@@ -148,12 +113,11 @@ def run_analyze(limit: int | None = None) -> int:
 
     conn.close()
     console.print(f"\n[bold]Analyzed {analyzed} candidates[/bold]")
-    console.print(f"Tokens — input: {total_input}, output: {total_output}, cache read: {total_cache_read}")
+    console.print(f"Tokens — input: {total_input}, output: {total_output}")
     return analyzed
 
 
 def run_full_pipeline() -> None:
     run_fetch_forks()
     run_enrich()
-    run_web_enrich()
     run_analyze()
