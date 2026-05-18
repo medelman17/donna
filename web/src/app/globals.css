@@ -584,7 +584,7 @@ body {
 .act .repo-n { color: var(--color-fg-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ─── CRM aside ─────────────────────────────────────────────────────────── */
-.aside { padding: 20px; display: flex; flex-direction: column; gap: 20px; position: sticky; top: 0; }
+.aside { padding: 14px; display: flex; flex-direction: column; gap: 16px; min-height: 100%; }
 .aside h3 {
   font-size: 10.5px; font-weight: 600; text-transform: uppercase;
   letter-spacing: 0.06em; color: var(--color-fg-subtle); margin: 0 0 8px;

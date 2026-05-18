@@ -212,15 +212,6 @@ export function CrmPanel({
             </div>
           </div>
 
-          {/* Keyboard */}
-          <div>
-            <h3>Keyboard</h3>
-            <div className="kbd-help">
-              <div className="kb-row"><span>Back to list</span><kbd>Esc</kbd></div>
-              <div className="kb-row"><span>Next / prev</span><kbd>J</kbd><kbd>K</kbd></div>
-              <div className="kb-row"><span>Focus search</span><kbd>/</kbd></div>
-            </div>
-          </div>
         </div>
       )}
 
@@ -235,6 +226,18 @@ export function CrmPanel({
           />
         </div>
       )}
+
+      {/* Keyboard rail — pinned to bottom */}
+      <div style={{
+        marginTop: "auto", padding: "8px 0 0",
+        borderTop: "1px solid var(--color-border)",
+        display: "flex", alignItems: "center", gap: 12,
+        fontSize: 10.5, color: "var(--color-fg-subtle)",
+      }}>
+        <span><kbd>Esc</kbd> list</span>
+        <span><kbd>J</kbd><kbd>K</kbd> nav</span>
+        <span><kbd>/</kbd> search</span>
+      </div>
     </div>
   );
 }
