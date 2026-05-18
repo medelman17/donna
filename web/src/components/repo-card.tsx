@@ -1,26 +1,27 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Star, GitFork } from "lucide-react";
+import { LangBadge, fmtNum, relTime } from "./atoms";
 
-type Props = { name: string; htmlUrl: string; description: string | null; language: string | null; stars: number; forks: number; isFork: boolean };
+type Props = {
+  name: string; htmlUrl: string; description: string | null;
+  language: string | null; stars: number; forks: number;
+  isFork: boolean; pushedAt: Date | null;
+};
 
-export function RepoCard({ name, htmlUrl, description, language, stars, forks, isFork }: Props) {
+export function RepoCard({ name, htmlUrl, description, language, stars, forks, isFork, pushedAt }: Props) {
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm">
-          <a href={htmlUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">{name}</a>
-          {isFork && <Badge variant="outline" className="ml-2 text-xs">fork</Badge>}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-1 text-sm text-muted-foreground">
-        {description && <p className="line-clamp-2">{description}</p>}
-        <div className="flex items-center gap-3 pt-1">
-          {language && <Badge variant="secondary">{language}</Badge>}
-          <span className="flex items-center gap-1"><Star className="h-3 w-3" /> {stars}</span>
-          <span className="flex items-center gap-1"><GitFork className="h-3 w-3" /> {forks}</span>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="repo">
+      <div>
+        <a className="r-name" href={htmlUrl} target="_blank" rel="noopener noreferrer">
+          {name}
+          {isFork && <span className="r-fork-flag">fork</span>}
+        </a>
+        <div className="r-descr">{description || <span className="dim">No description</span>}</div>
+      </div>
+      <div className="r-meta" style={{ alignSelf: "flex-start" }}>
+        {language && <LangBadge name={language} />}
+        <span className="item">{"★"} {fmtNum(stars)}</span>
+        <span className="item">{"⑂"} {forks}</span>
+        <span className="item dim">{relTime(pushedAt)}</span>
+      </div>
+    </div>
   );
 }
