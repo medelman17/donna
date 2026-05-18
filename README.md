@@ -1,6 +1,6 @@
 # Donna
 
-**Agentic Legal Tech Talent Discovery**
+**AI to Find Your Mike**
 
 > *"I'm Donna. I know everything."*
 > *— Donna Paulsen, Pearson Hardman*
@@ -19,13 +19,30 @@ Donna is a full-stack agentic talent intelligence platform. Point her at a GitHu
 
 1. **Seed** — Automatically ingest every person who has interacted with the repo: forkers, stargazers, issue authors, PR authors, and contributors. 3,700+ candidates from mike and growing.
 
-2. **Triage** — Score each candidate's GitHub profile on four dimensions (profile depth, repo volume, social signal, account age) and issue a verdict: **SKIP** (ghost account, don't waste tokens), **LIGHT** (quick look), or **INVESTIGATE** (full research).
+2. **Hydrate** — Batch-fetch GitHub profiles via GraphQL — follower counts, public repos, total commits, bios, locations, companies — so you can sort and prioritize before spending tokens on deep research.
 
-3. **Enrich** — Deploy a Claude-powered AI agent with 12 specialized tools to research each candidate in depth. The agent streams its work in real time — you watch it think, search, scrape, and analyze.
+3. **Triage** — Score each candidate's GitHub profile on four dimensions (profile depth, repo volume, social signal, account age) and issue a verdict: **SKIP** (ghost account, don't waste tokens), **LIGHT** (quick look), or **INVESTIGATE** (full research).
 
-4. **Analyze** — After enrichment, a structured extraction step distills everything into a typed profile: fit score, seniority level, signals, skills, LinkedIn data, web mentions, and 8 top-line category assessments.
+4. **Enrich** — Deploy a Claude-powered AI agent with 12 specialized tools to research each candidate in depth. The agent streams its work in real time — you watch it think, search, scrape, and analyze.
 
-5. **Surface** — Present everything in a responsive, keyboard-navigable UI with filtering, sorting, bookmarking, batch enrichment, and a CRM pipeline.
+5. **Analyze** — After enrichment, a structured extraction step distills everything into a typed profile: fit score, seniority level, signals, skills, LinkedIn data, web mentions, and 8 top-line category assessments.
+
+6. **Surface** — Present everything in a responsive, keyboard-navigable UI with filtering, sorting, bookmarking, batch enrichment, and a CRM pipeline.
+
+---
+
+## First Boot
+
+On first launch, Donna walks you through onboarding:
+
+1. **Bring your own key** — Enter your Anthropic API key (or leave blank if it's set via environment variable)
+2. **Tell Donna about your company** — Free-text company description
+3. **Add open positions** — Structured cards with title + description (add as many as you want)
+4. **Set hiring preferences** — Weighted tags with priority dots (1-3) that calibrate how candidates are scored
+5. **Auto-seed** — Donna fetches all candidates from GitHub automatically
+6. **Auto-hydrate** — Pulls follower counts, repos, commits, bios, and locations via GraphQL so you can sort immediately
+
+Skip any step and configure later via Settings.
 
 ---
 
@@ -102,10 +119,13 @@ The agent sees these scores but can override them — a LIGHT candidate with an 
 ## Architecture
 
 ```
-GitHub API (gh cli)
+GitHub API (gh cli + GraphQL)
        │
   POST /api/seed ──► Candidate rows in PostgreSQL
        │                (forkers, stargazers, issue/PR authors, contributors)
+       │
+  POST /api/seed/hydrate ──► GraphQL batch fetch (5 users/query)
+       │                       followers, repos, commits, bio, location
        │
   POST /api/enrich/[login] ──► BullMQ job queued in Redis
        │
@@ -133,6 +153,8 @@ GitHub API (gh cli)
 - **Tool-result-driven cards** — The model writes pure markdown narrative. The server auto-generates structured UI cards (ProfileHeader, MetricGrid, TriageCard, RepoCard) from tool result JSON.
 - **Interactive Prisma transactions** — `$transaction(async (tx) => ...)` instead of batch `$transaction([...])` because the batch approach breaks TypeScript when mixing operations across models.
 - **Settings-driven scoring** — Job positions and weighted hiring preferences are injected into both the enrichment agent system prompt and the analysis scoring prompt.
+- **BYOK API key** — Anthropic API key can be entered via UI (stored in Settings DB with 30s cache) or set via environment variable. All consumers resolve the key at runtime.
+- **Stale Prisma client detection** — The `globalThis` singleton compares the `PrismaClient` constructor reference to detect when `prisma generate` has produced a new client, and recreates automatically.
 
 ---
 
@@ -153,7 +175,7 @@ Candidate (login PK)
   └── AgentMemory[] — persistent agent state
 
 Settings
-  ├── Setting (key-value) — company_description, etc.
+  ├── Setting (key-value) — anthropic_api_key, company_description
   ├── JobPosition[] — title + description
   └── HiringPreference[] — tag + description + weight (1-3)
 ```
@@ -162,10 +184,12 @@ Settings
 
 ## UI
 
-- **List view** — Sortable, filterable table with fit score, seniority, languages, followers, repos, fork type, and CRM status. Multi-select rows for batch enrichment.
+- **Onboarding** — First-boot setup: API key, company description, structured job positions, weighted hiring preferences. Auto-seeds and hydrates after.
+- **List view** — Sortable, filterable table with fit score, seniority, languages, followers, repos, commits, and CRM status. Multi-select rows for batch enrichment. Sort by commits, followers, fit score, or name.
 - **Detail view** — Full candidate profile with tabbed sidebar (Details | Notes), assessment cards with color-coded category pills, signal list, repo cards, source links.
 - **Enrichment stream** — Real-time view of the AI agent working. Streaming markdown text interleaved with structured data cards. Thinking indicator, auto-scroll, animated transitions.
-- **Settings** — Company description (auto-save), structured job positions (CRUD), weighted hiring preference tags with visual dot indicators.
+- **Settings** — Anthropic API key (auto-save), company description (auto-save), structured job positions (CRUD), weighted hiring preference tags with visual dot indicators.
+- **Sync** — ↻ button in toolbar re-fetches from GitHub and hydrates new candidates.
 - **Mobile** — Responsive layout with bottom sheet sidebar, touch-optimized list rows.
 - **Keyboard navigation** — Arrow keys to browse, Enter to open, Space to select, `/` to search, `e` to enrich.
 
@@ -189,7 +213,7 @@ Settings
 - Node.js 20.19+
 - Docker (for PostgreSQL + Redis)
 - `gh` CLI authenticated (`gh auth login`)
-- API keys (see Environment below)
+- Anthropic API key (enter during onboarding or set via environment)
 
 ### Quick Start
 
@@ -208,17 +232,17 @@ npm run dev
 # Open http://localhost:3000
 ```
 
-On first load with an empty database, Donna automatically seeds candidates from GitHub — forkers, stargazers, issue authors, PR authors, and contributors. No manual step required.
+On first load, Donna walks you through onboarding — company description, open positions, hiring preferences. Then she automatically seeds candidates from GitHub and hydrates their profiles. No manual steps.
 
 To manually re-sync and pick up new stargazers/contributors, click the **↻** button in the toolbar.
 
 ### Environment
 
-Create `mise.local.toml` in the project root or export these variables:
+API keys can be entered through the UI during onboarding, or set as environment variables in `mise.local.toml`:
 
 | Variable | Required | Purpose |
 |----------|----------|---------|
-| `ANTHROPIC_API_KEY` | Yes | Claude API for enrichment + analysis |
+| `ANTHROPIC_API_KEY` | Via UI or env | Claude API for enrichment + analysis |
 | `FIRECRAWL_API_KEY` | Yes | Web search and page scraping |
 | `BROWSERBASE_API_KEY` | For LinkedIn/Twitter | Headless browser sessions |
 | `BROWSERBASE_PROJECT_ID` | For LinkedIn/Twitter | Browserbase project |
@@ -279,11 +303,12 @@ cd pipeline && uv sync
 | Route | Method | Purpose |
 |-------|--------|---------|
 | `/api/seed` | POST | Seed candidates from GitHub (forks, stars, issues, PRs, contributors) |
+| `/api/seed/hydrate` | POST | Batch-fetch GitHub profiles via GraphQL (followers, repos, commits) |
 | `/api/enrich/[login]` | POST | Queue enrichment job for a candidate |
 | `/api/enrich/[login]` | GET | Get enrichment status + recent logs |
 | `/api/enrich/[login]/stream` | GET | SSE stream of real-time enrichment events |
 | `/api/enrich/batch` | POST | Queue enrichment for multiple candidates |
-| `/api/settings` | GET/PUT | Company description (key-value) |
+| `/api/settings` | GET/PUT | Key-value settings (anthropic_api_key, company_description) |
 | `/api/settings/positions` | GET/POST/PUT/DELETE | Job position CRUD |
 | `/api/settings/preferences` | GET/POST/PUT/DELETE | Hiring preference CRUD (tag + weight) |
 
@@ -308,6 +333,7 @@ The enrichment stream publishes these event types:
 
 | File | Purpose |
 |------|---------|
+| `web/src/lib/anthropic.ts` | API key resolver — checks Settings DB (30s cache), falls back to env |
 | `web/src/lib/queue.ts` | BullMQ queue + worker setup via `globalThis` singleton |
 | `web/src/lib/enrich-worker.ts` | Main enrichment logic — `runEnrichment()` + `runAnalysis()` |
 | `web/src/lib/tools/index.ts` | Tool registry (12 tools) + system prompt |
@@ -328,6 +354,7 @@ The enrichment stream publishes these event types:
 
 | File | Purpose |
 |------|---------|
+| `web/src/components/seeding-state.tsx` | Onboarding flow: setup form → seed → hydrate → ready |
 | `web/src/components/enrich-stream.tsx` | Real-time enrichment viewer with streaming markdown + cards |
 | `web/src/components/candidate-list.tsx` | List view with multi-select + batch enrich |
 | `web/src/components/candidate-row.tsx` | Individual candidate row in list |
@@ -336,7 +363,6 @@ The enrichment stream publishes these event types:
 | `web/src/components/signal-list.tsx` | Positive/negative/notable signals |
 | `web/src/components/detail-with-enrich.tsx` | Detail page wrapper with enrichment context |
 | `web/src/components/crm-panel.tsx` | Status, notes, tags management |
-| `web/src/components/seeding-state.tsx` | Auto-seed loading screen |
 | `web/src/components/mobile-sheet.tsx` | Bottom sheet sidebar for mobile |
 
 ---
