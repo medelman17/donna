@@ -221,7 +221,7 @@ export function SeedingState() {
           <div className="logo-mark" style={{ width: 64, height: 64, fontSize: 36, borderRadius: 16 }}>D</div>
         </div>
         <h1 className="onboarding-title">Donna</h1>
-        <p className="onboarding-tagline">Find your Mike</p>
+        <p className="onboarding-tagline">AI to Find Your Mike</p>
 
         {phase === "setup" && (
           <SetupForm onComplete={startPipeline} />
