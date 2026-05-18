@@ -20,7 +20,7 @@ export default async function Home({ searchParams }: Props) {
       take: 200,
       include: {
         profile: { select: { summary: true, fitScore: true, seniority: true } },
-        crm: { select: { status: true } },
+        crm: { select: { status: true, bookmarked: true } },
         repos: { select: { language: true }, take: 20 },
         forkMeta: { select: { hasOwnCommits: true, aheadBy: true } },
       },
@@ -52,7 +52,9 @@ export default async function Home({ searchParams }: Props) {
     location: c.location,
     summary: c.profile?.summary ?? null,
     fitScore: c.profile?.fitScore ?? null,
+    seniority: c.profile?.seniority ?? null,
     status: c.crm?.status ?? "new",
+    bookmarked: c.crm?.bookmarked ?? false,
     topLanguages: [...new Set(c.repos.map(r => r.language).filter(Boolean))] as string[],
     followers: c.followers,
     publicRepos: c.publicRepos,

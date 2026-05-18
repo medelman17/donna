@@ -11,6 +11,7 @@ export function buildWhere(params: Record<string, string | undefined>) {
     };
   }
   if (hasCommits === "true") where.forkMeta = { hasOwnCommits: true };
+  if (params.bookmarked === "true") where.crm = { ...((where.crm as object) ?? {}), bookmarked: true };
   if (language && language !== "all") where.repos = { some: { language } };
   if (q) {
     where.OR = [

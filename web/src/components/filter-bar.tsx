@@ -129,6 +129,12 @@ export function FilterBar() {
         <span className="check-box">{hasCommits && <span style={{ fontSize: 9 }}>✓</span>}</span>
         Own commits
       </button>
+      <button className="toggle-pill" data-on={get("bookmarked", "false") === "true" || undefined}
+        onClick={() => set("bookmarked", get("bookmarked", "false") === "true" ? "" : "true")}
+        style={get("bookmarked", "false") === "true" ? { borderColor: "color-mix(in oklab, #f59e0b, transparent 40%)", color: "#f59e0b" } : undefined}>
+        <span style={{ fontSize: 12 }}>{get("bookmarked", "false") === "true" ? "★" : "☆"}</span>
+        Saved
+      </button>
       <div className="right">
         <FilterPopover label="Sort" value={get("sort", "fit-desc")} options={SORT_OPTS}
           onChange={v => set("sort", v)} align="right" />

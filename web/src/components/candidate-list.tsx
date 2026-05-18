@@ -7,7 +7,8 @@ import { ListKeyboardNav } from "./list-keyboard-nav";
 type CandidateData = {
   login: string; name: string | null; avatarUrl: string | null;
   location: string | null; summary: string | null;
-  fitScore: number | null; status: string; topLanguages: string[];
+  fitScore: number | null; seniority: string | null;
+  status: string; bookmarked: boolean; topLanguages: string[];
   followers: number; publicRepos: number;
   hasOwnCommits: boolean; aheadBy: number;
 };

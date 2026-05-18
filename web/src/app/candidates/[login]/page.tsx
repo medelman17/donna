@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Topbar } from "@/components/topbar";
 import { Avatar } from "@/components/avatar";
-import { StatusPill } from "@/components/atoms";
+import { StatusPill, FitChip } from "@/components/atoms";
 import { AssessmentCard } from "@/components/assessment-card";
 import { SignalList } from "@/components/signal-list";
 import { LinkedInBlock } from "@/components/linkedin-block";
@@ -87,13 +87,24 @@ export default async function CandidatePage({ params }: Props) {
                 </div>
               </header>
 
+              {profile?.summary && (
+                <div className="candidate-summary">
+                  <div className="cs-fit"><FitChip score={profile.fitScore ?? 0} /></div>
+                  <p>{profile.summary}</p>
+                </div>
+              )}
+
               {profile && (
                 <AssessmentCard fitScore={profile.fitScore ?? 0} seniority={profile.seniority}
                   confidence={profile.confidence} model={profile.model}
-                  generatedAt={profile.generatedAt} summary={profile.summary}
+                  generatedAt={profile.generatedAt} summary={null}
                   fitReasoning={profile.fitReasoning}
                   recommendedOutreach={profile.recommendedOutreach}
-                  outreachReason={profile.outreachReason} />
+                  outreachReason={profile.outreachReason}
+                  openToWork={profile.openToWork} isLawyer={profile.isLawyer}
+                  hasOwnCompany={profile.hasOwnCompany} companyName={profile.companyName}
+                  aiExperience={profile.aiExperience} legalTechRelevance={profile.legalTechRelevance}
+                  communityActivity={profile.communityActivity} influenceLevel={profile.influenceLevel} />
               )}
 
               <section className="section">
@@ -171,7 +182,11 @@ export default async function CandidatePage({ params }: Props) {
               githubCreatedAt={candidate.githubCreatedAt}
               hasOwnCommits={forkMeta?.hasOwnCommits ?? false}
               aheadBy={forkMeta?.aheadBy ?? 0} behindBy={forkMeta?.behindBy ?? 0}
-              forkPushedAt={forkMeta?.forkPushedAt ?? null} />
+              forkPushedAt={forkMeta?.forkPushedAt ?? null}
+              openToWork={profile?.openToWork ?? null}
+              aiExperience={profile?.aiExperience ?? null}
+              legalTechRelevance={profile?.legalTechRelevance ?? null}
+              seniority={profile?.seniority ?? null} />
           </aside>
         </div>
       </DetailNav>

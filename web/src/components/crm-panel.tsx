@@ -10,6 +10,8 @@ type Props = {
   confidence: number | null; model: string | null;
   followers: number; publicRepos: number; githubCreatedAt: Date | null;
   hasOwnCommits: boolean; aheadBy: number; behindBy: number; forkPushedAt: Date | null;
+  openToWork: string | null; aiExperience: string | null;
+  legalTechRelevance: string | null; seniority: string | null;
 };
 
 export function CrmPanel({
@@ -17,6 +19,7 @@ export function CrmPanel({
   fitScore, recommendedOutreach, confidence, model,
   followers, publicRepos, githubCreatedAt,
   hasOwnCommits, aheadBy, behindBy, forkPushedAt,
+  openToWork, aiExperience, legalTechRelevance, seniority,
 }: Props) {
   const [status, setStatus] = useState(initStatus);
   const [bookmarked, setBookmarked] = useState(initBookmarked);
@@ -45,6 +48,12 @@ export function CrmPanel({
   const handleStatus = (v: string) => {
     setStatus(v);
     updateCrm(login, { status: v });
+    flash();
+  };
+  const handleBookmark = () => {
+    const next = !bookmarked;
+    setBookmarked(next);
+    updateCrm(login, { bookmarked: next });
     flash();
   };
   const handleNotes = (v: string) => {
@@ -80,12 +89,12 @@ export function CrmPanel({
 
   const savedTags = tagInput.split(",").map(t => t.trim()).filter(Boolean);
 
-  const handleBookmark = () => {
-    const next = !bookmarked;
-    setBookmarked(next);
-    updateCrm(login, { bookmarked: next });
-    flash();
-  };
+  const quickFacts = [
+    openToWork && openToWork !== "unknown" && { label: "Open to Work", value: openToWork },
+    seniority && seniority !== "unknown" && { label: "Seniority", value: seniority },
+    aiExperience && aiExperience !== "unknown" && aiExperience !== "none" && { label: "AI", value: aiExperience },
+    legalTechRelevance && legalTechRelevance !== "unknown" && legalTechRelevance !== "none" && { label: "Legal Tech", value: legalTechRelevance },
+  ].filter(Boolean) as { label: string; value: string }[];
 
   return (
     <div className="aside">
@@ -144,6 +153,19 @@ export function CrmPanel({
           <div className="qs"><div className="k">Followers</div><div className="v">{fmtNum(followers)}</div><div className="sub">{publicRepos} repos</div></div>
           <div className="qs"><div className="k">Account</div><div className="v">{acctAge != null ? acctAge + "y" : "—"}</div><div className="sub">on GitHub</div></div>
         </div>
+        {quickFacts.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 8 }}>
+            {quickFacts.map(f => (
+              <span key={f.label} style={{
+                fontSize: 11, padding: "2px 7px", borderRadius: 4,
+                background: "var(--color-bg-2)", border: "1px solid var(--color-border)",
+                color: "var(--color-fg-muted)", fontWeight: 500,
+              }}>
+                {f.label}: {f.value}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       <div>
         <h3>Fork</h3>
