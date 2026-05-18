@@ -10,6 +10,7 @@ import { RepoCard } from "@/components/repo-card";
 import { WebMention } from "@/components/web-mention";
 import { ActivityList } from "@/components/activity-list";
 import { CrmPanel } from "@/components/crm-panel";
+import { EnrichButton } from "@/components/enrich-button";
 import { DetailNav } from "@/components/detail-nav";
 import { MapPin, Building2, ExternalLink, Globe, AtSign, Link2 } from "lucide-react";
 
@@ -133,6 +134,10 @@ export default async function CandidatePage({ params }: Props) {
           </main>
 
           <aside className="detail-aside">
+            <div style={{ padding: "12px 20px 0", borderBottom: "1px solid var(--color-border)", paddingBottom: 12 }}>
+              <h3 style={{ fontSize: 10.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--color-fg-subtle)", margin: "0 0 8px" }}>Agent</h3>
+              <EnrichButton login={login} />
+            </div>
             <CrmPanel login={login}
               status={crm?.status ?? "new"} notes={crm?.notes ?? null} tags={crm?.tags ?? null}
               fitScore={profile?.fitScore ?? null}
