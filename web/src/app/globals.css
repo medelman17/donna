@@ -317,6 +317,20 @@ body {
 }
 .dx { padding: 22px 28px; max-width: 920px; }
 
+.enrich-fab {
+  position: sticky; top: 12px; float: right; z-index: 5;
+  appearance: none; border: 1px solid var(--color-border);
+  background: var(--color-panel); color: var(--color-accent);
+  border-radius: var(--radius-DEFAULT); padding: 5px 14px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.enrich-fab:hover {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-md);
+}
+
 .detail-header {
   display: flex; gap: 18px; align-items: flex-start;
   padding-bottom: 18px; border-bottom: 1px solid var(--color-border); margin-bottom: 18px;
