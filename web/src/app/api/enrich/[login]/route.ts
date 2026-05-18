@@ -6,18 +6,6 @@ import { enrichmentTools, ENRICHMENT_SYSTEM_PROMPT } from "@/lib/tools";
 
 export const maxDuration = 300;
 
-export type StreamEvent =
-  | { type: "text"; text: string }
-  | { type: "tool-call"; toolName: string; args: string }
-  | { type: "tool-result"; toolName: string; result: string }
-  | { type: "done" };
-
-const encoder = new TextEncoder();
-
-function formatEvent(event: StreamEvent): Uint8Array {
-  return encoder.encode("data: " + JSON.stringify(event) + "\n\n");
-}
-
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ login: string }> }
@@ -32,7 +20,7 @@ export async function POST(
   const result = streamText({
     model: anthropic("claude-opus-4-7"),
     system: ENRICHMENT_SYSTEM_PROMPT,
-    prompt: `Research the GitHub developer '${login}' who forked willchen96/mike (an AI legal platform). Start by pulling their GitHub data, then use what you find to search the web for their professional presence. Think out loud.`,
+    prompt: `Research the GitHub developer '${login}' who forked willchen96/mike (an AI legal platform). Start by pulling their GitHub data, then use what you find to search the web for their professional presence.`,
     tools: enrichmentTools,
     stopWhen: stepCountIs(25),
     abortSignal: request.signal,
@@ -52,62 +40,7 @@ export async function POST(
     },
   });
 
-  const stream = new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const chunk of result.fullStream) {
-          // Log chunk type and keys for debugging
-          const keys = Object.keys(chunk).join(",");
-          console.log(`[enrich-stream] type=${chunk.type} keys=${keys}`);
-
-          switch (chunk.type) {
-            case "text-delta": {
-              const text = (chunk as any).text ?? (chunk as any).textDelta ?? "";
-              if (text) controller.enqueue(formatEvent({ type: "text", text }));
-              break;
-            }
-            case "tool-call":
-              controller.enqueue(formatEvent({
-                type: "tool-call",
-                toolName: (chunk as any).toolName ?? "",
-                args: JSON.stringify((chunk as any).input ?? (chunk as any).args ?? {}).slice(0, 200),
-              }));
-              break;
-            case "tool-result":
-              controller.enqueue(formatEvent({
-                type: "tool-result",
-                toolName: (chunk as any).toolName ?? "",
-                result: typeof (chunk as any).output === "string"
-                  ? (chunk as any).output.slice(0, 200)
-                  : JSON.stringify((chunk as any).output ?? (chunk as any).result ?? {}).slice(0, 200),
-              }));
-              break;
-            case "finish":
-              controller.enqueue(formatEvent({ type: "done" }));
-              break;
-            default:
-              // Catch any other chunk types
-              console.log(`[enrich-stream] unhandled: ${JSON.stringify(chunk).slice(0, 300)}`);
-              break;
-          }
-        }
-      } catch (e: any) {
-        if (e.name !== "AbortError") {
-          controller.enqueue(formatEvent({ type: "done" }));
-        }
-      } finally {
-        controller.close();
-      }
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    },
-  });
+  return result.toTextStreamResponse();
 }
 
 export async function GET(
