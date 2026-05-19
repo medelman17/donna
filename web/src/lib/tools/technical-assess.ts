@@ -29,7 +29,7 @@ export const technicalAssessTool = tool({
         stopWhen: stepCountIs(15),
         abortSignal,
         providerOptions: {
-          anthropic: { thinking: { type: "enabled", budgetTokens: 5000, effort: "high" } },
+          anthropic: { thinking: { type: "enabled", budgetTokens: 5000 } },
         },
       });
       return text || "Assessment could not be completed.";
