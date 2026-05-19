@@ -83,7 +83,7 @@ npm install --silent
 echo '→ Generating Prisma client...'
 npx prisma generate
 echo '→ Pushing schema to database...'
-npx prisma db push --skip-generate
+npx prisma db push
 echo '→ Building Next.js...'
 npm run build
 echo '→ Starting production server on :3000'
