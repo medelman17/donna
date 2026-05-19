@@ -22,12 +22,15 @@ export const technicalAssessTool = tool({
     const repoList = repos.slice(0, 3).map(r => `${login}/${r}`).join(", ");
     try {
       const { text } = await generateText({
-        model: anthropic("claude-opus-4-6"),
+        model: anthropic("claude-opus-4-7"),
         system: ASSESSOR_PROMPT,
         prompt: `Assess the technical ability of '${login}' by reading code from: ${repoList}`,
         tools: { gh_query: ghQueryTool },
         stopWhen: stepCountIs(15),
         abortSignal,
+        providerOptions: {
+          anthropic: { thinking: { type: "enabled", budgetTokens: 5000, effort: "high" } },
+        },
       });
       return text || "Assessment could not be completed.";
     } catch (e: any) {

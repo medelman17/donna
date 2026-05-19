@@ -20,12 +20,15 @@ export const legalAssessTool = tool({
     const anthropic = await getAnthropicProvider();
     try {
       const { text } = await generateText({
-        model: anthropic("claude-opus-4-6"),
+        model: anthropic("claude-opus-4-7"),
         system: LEGAL_PROMPT,
         prompt: `Assess legal-tech relevance for '${login}'. Context: ${context || "none"}`,
         tools: { gh_query: ghQueryTool, web_search: webSearchTool },
         stopWhen: stepCountIs(15),
         abortSignal,
+        providerOptions: {
+          anthropic: { thinking: { type: "enabled", budgetTokens: 5000, effort: "high" } },
+        },
       });
       return text || "Could not assess legal relevance.";
     } catch (e: any) {
