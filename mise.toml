@@ -73,3 +73,19 @@ run = "npx prisma migrate dev"
 description = "Open Prisma Studio"
 dir = "web"
 run = "npx prisma studio"
+
+[tasks.prod]
+description = "Build and run production server"
+dir = "web"
+run = """
+echo '→ Installing dependencies...'
+npm install --silent
+echo '→ Generating Prisma client...'
+npx prisma generate
+echo '→ Pushing schema to database...'
+npx prisma db push --skip-generate
+echo '→ Building Next.js...'
+npm run build
+echo '→ Starting production server on :3000'
+npm run start
+"""
