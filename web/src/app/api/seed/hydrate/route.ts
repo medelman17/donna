@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import { execFile } from "child_process";
-import { promisify } from "util";
 import { prisma } from "@/lib/prisma";
-
-const execFileAsync = promisify(execFile);
+import { getGitHubToken } from "@/lib/api-keys";
 
 const BATCH_SIZE = 5;
 
@@ -15,7 +12,30 @@ const USER_FIELDS = `
   createdAt isHireable twitterUsername websiteUrl
 `;
 
-export async function POST(request: Request) {
+async function graphql(token: string, query: string) {
+  const res = await fetch("https://api.github.com/graphql", {
+    method: "POST",
+    headers: {
+      Authorization: `bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query }),
+  });
+
+  if (!res.ok) throw new Error(`GitHub GraphQL ${res.status}: ${res.statusText}`);
+  const json = await res.json();
+  if (json.errors?.length && !json.data) {
+    throw new Error(json.errors[0].message);
+  }
+  return json.data ?? {};
+}
+
+export async function POST() {
+  const token = await getGitHubToken();
+  if (!token) {
+    return NextResponse.json({ error: "No GitHub token available" }, { status: 500 });
+  }
+
   const unhydrated = await prisma.candidate.findMany({
     where: {
       OR: [
@@ -36,17 +56,11 @@ export async function POST(request: Request) {
     const batch = unhydrated.slice(i, i + BATCH_SIZE);
 
     const aliases = batch
-      .map((c, j) => `u${j}: user(login: "${c.login}") { login ${USER_FIELDS} }`)
+      .map((c, j) => `u${j}: user(login: ${JSON.stringify(c.login)}) { login ${USER_FIELDS} }`)
       .join("\n");
 
     try {
-      const { stdout } = await execFileAsync(
-        "gh",
-        ["api", "graphql", "-f", `query={ ${aliases} }`, "--jq", ".data"],
-        { timeout: 30000, maxBuffer: 5 * 1024 * 1024 },
-      );
-
-      const data = JSON.parse(stdout);
+      const data = await graphql(token, `{ ${aliases} }`);
 
       for (const key of Object.keys(data)) {
         const u = data[key];
