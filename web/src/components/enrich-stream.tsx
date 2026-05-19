@@ -43,6 +43,7 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
   useEffect(() => {
     let cancelled = false;
     let rafId = 0;
+    blocksRef.current = [];
 
     const pushBlock = (block: { type: string; [k: string]: any }) => {
       const last = blocksRef.current[blocksRef.current.length - 1];
@@ -254,16 +255,21 @@ export function EnrichStream({ login, onDone }: { login: string; onDone: () => v
                 while (i < blocks.length) {
                   const block = blocks[i];
                   if (block.type === "text") {
-                    const text = block.text.trim();
+                    let merged = "";
+                    const firstId = block.id;
+                    while (i < blocks.length && blocks[i].type === "text") {
+                      merged += (blocks[i] as ContentBlock & { type: "text" }).text;
+                      i++;
+                    }
+                    const text = merged.trim();
                     if (text) {
                       rendered.push(
-                        <motion.div key={block.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                        <motion.div key={firstId} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }} className="enrich-prose">
                           <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
                         </motion.div>
                       );
                     }
-                    i++;
                   } else if (block.type === "card") {
                     const Component = enrichComponents[block.card];
                     if (Component) {
