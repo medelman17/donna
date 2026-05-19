@@ -126,6 +126,7 @@ export function FilterBar() {
     debounceRef.current = setTimeout(() => set("q", v), 200);
   };
 
+  const forked = get("forked", "false") === "true";
   const hasCommits = get("hasCommits", "false") === "true";
 
   useEffect(() => {
@@ -155,6 +156,11 @@ export function FilterBar() {
         <FilterPopover label="Seniority" value={get("seniority", "all")} options={SENIORITY_OPTS} onChange={v => set("seniority", v)} />
         <FilterPopover label="Fit" value={get("minFit", "0")} options={FIT_OPTS} onChange={v => set("minFit", v)} />
         <FilterPopover label="Lang" value={get("language", "all")} options={LANG_OPTS} onChange={v => set("language", v)} />
+        <button className="toggle-pill" data-on={forked || undefined}
+          onClick={() => set("forked", forked ? "" : "true")}>
+          <span className="check-box">{forked && <span style={{ fontSize: 9 }}>✓</span>}</span>
+          Forked
+        </button>
         <button className="toggle-pill" data-on={hasCommits || undefined}
           onClick={() => set("hasCommits", hasCommits ? "" : "true")}>
           <span className="check-box">{hasCommits && <span style={{ fontSize: 9 }}>✓</span>}</span>
