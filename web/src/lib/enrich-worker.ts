@@ -86,6 +86,8 @@ export async function runEnrichment(login: string) {
   try {
     let stepCount = 0;
     for await (const chunk of result.fullStream) {
+      if ((chunk.type as string).startsWith("reasoning")) continue;
+
       switch (chunk.type) {
         case "start-step":
           if (stepCount > 0) {
