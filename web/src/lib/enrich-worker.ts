@@ -63,7 +63,7 @@ export async function runEnrichment(login: string) {
     tools: enrichmentTools,
     stopWhen: stepCountIs(50),
     providerOptions: {
-      anthropic: { thinking: { type: "enabled", budgetTokens: 10000 } },
+      anthropic: { thinking: { type: "adaptive" }, effort: "high" },
     },
     onStepFinish: async ({ toolCalls, toolResults }) => {
       for (const tc of toolCalls) {
@@ -264,7 +264,7 @@ async function runAnalysis(login: string, narrative: string) {
     model: anthropic("claude-opus-4-7"),
     schema: analysisSchema,
     providerOptions: {
-      anthropic: { thinking: { type: "enabled", budgetTokens: 10000 } },
+      anthropic: { thinking: { type: "adaptive" }, effort: "high" },
     },
     prompt: [
       `Analyze this talent research report and extract a structured assessment.`,
